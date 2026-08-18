@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Allianz Command Center | Executive Live Analytics</title>
+    <title>Allianz Command Center | Live Dashboard</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -56,13 +56,13 @@
                 </div>
 
                 <!-- Sync Live Button -->
-                <button onclick="syncDataLive()" class="px-3.5 py-2 allianz-gradient hover:opacity-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-blue-600/30">
+                <button onclick="forceLiveSync()" class="px-3.5 py-2 allianz-gradient hover:opacity-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-blue-600/30">
                     <i data-lucide="refresh-cw" id="sync-icon" class="w-4 h-4"></i> Actualizar Sheets
                 </button>
 
                 <!-- Config Modal Button -->
                 <button onclick="document.getElementById('config-modal').classList.remove('hidden')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
-                    <i data-lucide="link" class="w-4 h-4 text-cyan-400"></i> Enlace
+                    <i data-lucide="link" class="w-4 h-4 text-cyan-400"></i> Enlace Sheets
                 </button>
 
                 <!-- Excel Upload fallback -->
@@ -146,7 +146,7 @@
             </div>
         </section>
 
-        <!-- Executive KPI Cards Section (4 Main Cards) -->
+        <!-- Executive KPI Cards Section -->
         <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             
             <!-- 1. Total Inflow & Response Rate -->
@@ -198,7 +198,7 @@
                         <i data-lucide="alert-triangle" class="w-5 h-5"></i>
                     </div>
                 </div>
-                <div class="mt-2 text-[11px] text-slate-400 space-y-0.5 border-t border-slate-800/80 pt-2" id="escalados-breakdown-list">
+                <div class="mt-2 text-[11px] text-slate-400 space-y-0.5 border-t border-slate-800/80 pt-2">
                     <div class="flex justify-between"><span>Abiertos / En Proceso:</span><strong id="kpi-esc-abiertos" class="text-amber-300">0 (0%)</strong></div>
                     <div class="flex justify-between"><span>Cerrados / Resueltos:</span><strong id="kpi-esc-cerrados" class="text-emerald-400">0 (0%)</strong></div>
                 </div>
@@ -262,7 +262,7 @@
             <div class="glass-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-sm font-bold text-white flex items-center gap-2">
-                        <i data-lucide="message-circle" class="w-4 h-4 text-cyan-400"></i> Inflow por Medio (Historia, Comentario, Mensaje...)
+                        <i data-lucide="message-circle" class="w-4 h-4 text-cyan-400"></i> Inflow por Medio
                     </h3>
                     <span id="medio-total-badge" class="text-xs px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 font-semibold">0 medios</span>
                 </div>
@@ -332,7 +332,7 @@
                             <th class="py-3 px-3">Enlace</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium">
+                    <tbody id="table-body" class="divide-y border-slate-800/60 font-medium">
                     </tbody>
                 </table>
             </div>
@@ -358,7 +358,7 @@
             </div>
             
             <div class="bg-blue-950/40 border border-blue-500/30 p-3.5 rounded-xl text-xs text-blue-200 space-y-1.5">
-                <p>Pega aquí el enlace de compartir de tu Google Sheet (<em>Compartir &gt; Copiar enlace</em>):</p>
+                <p>Pega aquí tu enlace publicado de Google Sheets (CSV) o enlace normal de compartir:</p>
             </div>
 
             <div>
@@ -375,7 +375,7 @@
         </div>
     </div>
 
-    <!-- Script Logic -->
+    <!-- Script Logic with Direct Fallback Seed Data -->
     <script>
         let rawData = [];
         let currentTimeView = 'day';
@@ -401,7 +401,6 @@
             "12": "Diciembre", "dic": "Diciembre", "diciembre": "Diciembre", "dec": "Diciembre"
         };
 
-        // Universal Date Normalizer (Converts any string/Date/timestamp to clean YYYY-MM-DD)
         function normalizeDateToYYYYMMDD(val) {
             if (!val) return '';
             if (val instanceof Date) {
@@ -413,7 +412,6 @@
             }
             const str = String(val).trim();
             
-            // Format from Google Viz API: Date(2026, 7, 18) -> Month is 0-indexed
             const gvizDateMatch = str.match(/Date\((\d+),(\d+),(\d+)/);
             if (gvizDateMatch) {
                 const y = gvizDateMatch[1];
@@ -422,7 +420,6 @@
                 return `${y}-${m}-${d}`;
             }
 
-            // DD/MM/YYYY or D/M/YYYY or DD-MM-YYYY
             const dmyMatch = str.match(/^(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})/);
             if (dmyMatch) {
                 const d = String(dmyMatch[1]).padStart(2, '0');
@@ -431,7 +428,6 @@
                 return `${y}-${m}-${d}`;
             }
 
-            // YYYY-MM-DD or YYYY/MM/DD
             const ymdMatch = str.match(/^(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})/);
             if (ymdMatch) {
                 const y = ymdMatch[1];
@@ -440,7 +436,6 @@
                 return `${y}-${m}-${d}`;
             }
 
-            // Fallback Date object
             const parsed = new Date(str);
             if (!isNaN(parsed.getTime())) {
                 const y = parsed.getFullYear();
@@ -469,95 +464,64 @@
             lucide.createIcons();
             const savedUrl = localStorage.getItem(DEFAULT_SHEET_KEY) || DEFAULT_URL;
             document.getElementById('sheet-url-input').value = savedUrl;
-            syncDataLive(savedUrl);
+            forceLiveSync(savedUrl);
         }
 
-        function syncDataLive(customUrl) {
+        function forceLiveSync(customUrl) {
             const url = customUrl || localStorage.getItem(DEFAULT_SHEET_KEY) || document.getElementById('sheet-url-input').value.trim() || DEFAULT_URL;
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.add('animate-spin');
 
-            const idMatch = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
-            if (idMatch && idMatch[1] && !url.includes('/d/e/2PACX-')) {
-                const sheetId = idMatch[1];
-                const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:handleGvizResponse&sheet=data_pqrs&tq=`;
-                
-                const oldScript = document.getElementById('gviz-jsonp-script');
-                if (oldScript) oldScript.remove();
-
-                const script = document.createElement('script');
-                script.id = 'gviz-jsonp-script';
-                script.src = gvizUrl;
-                script.onerror = function() {
-                    fallbackToProxyCsv(url);
-                };
-                document.body.appendChild(script);
-                return;
+            let csvTarget = url;
+            if (!csvTarget.includes('output=csv') && !csvTarget.includes('export?format=csv')) {
+                csvTarget = csvTarget.replace(/\/edit.*$/, '') + '/export?format=csv';
             }
 
-            fallbackToProxyCsv(url);
+            const proxy1 = `https://corsproxy.io/?${encodeURIComponent(csvTarget)}`;
+            const proxy2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(csvTarget)}`;
+
+            tryFetchCsv(csvTarget, function(success) {
+                if (success) return finishSync();
+                tryFetchCsv(proxy1, function(success2) {
+                    if (success2) return finishSync();
+                    tryFetchCsv(proxy2, function(success3) {
+                        finishSync();
+                    });
+                });
+            });
         }
 
-        function fallbackToProxyCsv(url) {
-            let csvUrl = url;
-            if (!csvUrl.includes('output=csv') && !csvUrl.includes('export?format=csv')) {
-                csvUrl = csvUrl.replace(/\/edit.*$/, '') + '/export?format=csv';
-            }
-            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl);
-            
-            Papa.parse(proxyUrl, {
+        function finishSync() {
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.remove('animate-spin');
+        }
+
+        function tryFetchCsv(targetUrl, callback) {
+            Papa.parse(targetUrl, {
                 download: true,
                 header: true,
                 skipEmptyLines: 'greedy',
                 complete: function(res) {
-                    const syncIcon = document.getElementById('sync-icon');
-                    if (syncIcon) syncIcon.classList.remove('animate-spin');
                     if (res.data && res.data.length > 0) {
                         mapRawJsonToDashboard(res.data);
-                        document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${res.data.length} filas)`;
+                        document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${res.data.length.toLocaleString()} filas)`;
+                        callback(true);
+                    } else {
+                        callback(false);
                     }
                 },
                 error: function() {
-                    const syncIcon = document.getElementById('sync-icon');
-                    if (syncIcon) syncIcon.classList.remove('animate-spin');
+                    callback(false);
                 }
             });
         }
-
-        window.handleGvizResponse = function(response) {
-            const syncIcon = document.getElementById('sync-icon');
-            if (syncIcon) syncIcon.classList.remove('animate-spin');
-
-            if (!response || !response.table) return;
-
-            const cols = response.table.cols.map(c => (c && c.label) ? c.label.trim() : '');
-            const rows = response.table.rows;
-
-            const jsonRows = [];
-            rows.forEach(r => {
-                const item = {};
-                r.c.forEach((cell, idx) => {
-                    const colName = cols[idx] || `Col_${idx}`;
-                    let val = '';
-                    if (cell && cell.f) val = cell.f;
-                    else if (cell && cell.v !== null && cell.v !== undefined) val = cell.v;
-                    item[colName] = val;
-                });
-                jsonRows.push(item);
-            });
-
-            if (jsonRows.length > 0) {
-                mapRawJsonToDashboard(jsonRows);
-                document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${jsonRows.length} filas)`;
-            }
-        };
 
         function saveAndSyncSheetUrl() {
             const url = document.getElementById('sheet-url-input').value.trim();
             if (!url) return;
             localStorage.setItem(DEFAULT_SHEET_KEY, url);
             document.getElementById('config-modal').classList.add('hidden');
-            syncDataLive(url);
+            forceLiveSync(url);
         }
 
         function handleExcelUpload(event) {
@@ -574,7 +538,7 @@
                 if (jsonRows.length > 0) {
                     mapRawJsonToDashboard(jsonRows);
                     document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Archivo Local (${file.name})`;
-                    alert(`¡Archivo cargado con éxito! Se importaron ${jsonRows.length} registros.`);
+                    alert(`¡Archivo cargado con éxito! Se importaron ${jsonRows.length.toLocaleString()} registros.`);
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -591,17 +555,14 @@
                 const mesNormalizado = normalizeMonth(r["Mes"] || r["mes"], fechaSolStr);
                 const anoStr = (r["AÑO"] || r["Ano"] || r["ano"] || (fechaSolStr ? fechaSolStr.substring(0, 4) : "2026")).toString().trim();
 
-                // Clean Marcas to standard "Allianz Colombia" or "Fundación Allianz"
                 let rawMarca = (r["Marcas y plataformas de Allianz"] || r["marcas"] || "Allianz Colombia").toString().trim();
                 let marcaClean = "Allianz Colombia";
                 if (rawMarca.toLowerCase().includes("funda")) {
                     marcaClean = "Fundación Allianz";
                 }
 
-                // Clean Status Casos Escalados
                 let rawStatus = (r["Status Casos Escalados"] || r["statusEscalado"] || "No aplica").toString().trim();
 
-                // Clean Experiencia / Sentimiento
                 let rawExp = (r["Experiencia"] || r["experiencia"] || "Neutra").toString().trim();
                 let expClean = "Neutra";
                 if (rawExp.toLowerCase().includes("pos")) expClean = "Positiva";
@@ -639,7 +600,6 @@
             const getUnique = key => [...new Set(rawData.map(d => d[key]).filter(Boolean))].sort();
             fillSelect('filter-ano', getUnique('ano'));
             
-            // Sort calendar months
             const calendarMonths = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             const rawMonths = getUnique('mes');
             const sortedMonths = calendarMonths.filter(m => rawMonths.includes(m)).concat(rawMonths.filter(m => !calendarMonths.includes(m)));
@@ -728,7 +688,7 @@
 
         function renderDashboard() {
             const data = getFilteredData();
-            document.getElementById('filtered-records-counter').textContent = `${data.length} de ${rawData.length} registros filtrados`;
+            document.getElementById('filtered-records-counter').textContent = `${data.length.toLocaleString()} de ${rawData.length.toLocaleString()} registros filtrados`;
             updateKPIs(data);
             updateTimelineChart(data);
             updateBreakdownCharts(data);
@@ -744,7 +704,7 @@
             document.getElementById('kpi-total-inflow').textContent = total.toLocaleString();
             document.getElementById('kpi-resp-rate').textContent = `${conResp.toLocaleString()} (${respPct}%)`;
 
-            // 2. Marcas (Allianz Colombia vs Fundación Allianz)
+            // 2. Marcas
             const allianzColCount = data.filter(d => d.marcas === "Allianz Colombia").length;
             const fundacionCount = data.filter(d => d.marcas === "Fundación Allianz").length;
             const allianzColPct = total ? Math.round((allianzColCount / total) * 100) : 0;
@@ -755,7 +715,7 @@
             document.getElementById('kpi-pct-allianz').textContent = `${allianzColCount.toLocaleString()} (${allianzColPct}%)`;
             document.getElementById('kpi-pct-fundacion').textContent = `${fundacionCount.toLocaleString()} (${fundacionPct}%)`;
 
-            // 3. Escalados & Estados (Abierto, Cerrado, En Proceso...)
+            // 3. Escalados
             const escalados = data.filter(d => {
                 const esc = (d.escalado || '').toString().toLowerCase().trim();
                 return esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
@@ -764,7 +724,6 @@
             const escPct = total ? Math.round((totalEscalados / total) * 100) : 0;
             document.getElementById('kpi-escalados').textContent = `${totalEscalados.toLocaleString()} (${escPct}%)`;
 
-            // Status counts
             const statusAbiertos = data.filter(d => {
                 const s = (d.statusEscalado || '').toLowerCase();
                 return s.includes('abierto') || s.includes('proceso') || s.includes('pendiente') || s.includes('asignado');
@@ -780,7 +739,7 @@
             document.getElementById('kpi-esc-abiertos').textContent = `${statusAbiertos.toLocaleString()} (${abPct}%)`;
             document.getElementById('kpi-esc-cerrados').textContent = `${statusCerrados.toLocaleString()} (${cePct}%)`;
 
-            // 4. Sentimiento / Experiencia (% y Cantidad)
+            // 4. Sentimiento
             const posCount = data.filter(d => d.experiencia === "Positiva").length;
             const neuCount = data.filter(d => d.experiencia === "Neutra").length;
             const negCount = data.filter(d => d.experiencia === "Negativa").length;
@@ -861,7 +820,6 @@
         function updateBreakdownCharts(data) {
             const total = data.length;
 
-            // 1. Canal (with counts and %)
             const canalCounts = {};
             data.forEach(d => {
                 const c = d.canal || 'Otros';
@@ -871,7 +829,6 @@
             document.getElementById('canal-total-badge').textContent = `${canalLabels.length} canales activos`;
             createDistributionChart('canalChart', canalCounts, total, ['#0070d2', '#e1306c', '#0077b5', '#0284c7', '#ff0000', '#10b981'], 'doughnut');
 
-            // 2. Medio (with counts and %)
             const medioCounts = {};
             data.forEach(d => {
                 const m = d.medio || 'Otros';
@@ -881,7 +838,6 @@
             document.getElementById('medio-total-badge').textContent = `${medioLabels.length} medios activos`;
             createDistributionChart('medioChart', medioCounts, total, ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981'], 'pie');
 
-            // 3. Motivo Top 6
             const motivoCounts = {};
             data.forEach(d => {
                 const mot = d.motivo || 'Otros';
@@ -889,7 +845,6 @@
             });
             createDistributionChart('motivoChart', motivoCounts, total, ['#8b5cf6', '#6366f1', '#a855f7', '#d946ef', '#0ea5e9', '#10b981'], 'bar', true, 6);
 
-            // 4. Status Casos Escalados
             const statusCounts = {};
             data.forEach(d => {
                 const st = d.statusEscalado || 'No Especificado';
@@ -1029,7 +984,7 @@
                 lucide.createIcons();
             }
 
-            document.getElementById('table-count-info').textContent = `Mostrando ${Math.min(start + 1, total)} - ${Math.min(end, total)} de ${total} registros`;
+            document.getElementById('table-count-info').textContent = `Mostrando ${Math.min(start + 1, total)} - ${Math.min(end, total)} de ${total.toLocaleString()} registros`;
             document.getElementById('prev-page-btn').disabled = currentPage === 1;
             document.getElementById('next-page-btn').disabled = end >= total;
         }
