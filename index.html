@@ -41,7 +41,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-                        Allianz Inflow Command Center <span id="connection-status" class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs En Vivo</span>
+                        Allianz Inflow Command Center <span id="connection-status" class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Conectando...</span>
                     </h1>
                     <p class="text-xs text-slate-400">Social Listening, Sentimiento, Escalados & Desglose por Marcas</p>
                 </div>
@@ -56,7 +56,7 @@
                 </div>
 
                 <!-- Sync Live Button -->
-                <button onclick="forceLiveSync()" class="px-3.5 py-2 allianz-gradient hover:opacity-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-blue-600/30">
+                <button onclick="syncDataLive()" class="px-3.5 py-2 allianz-gradient hover:opacity-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-blue-600/30">
                     <i data-lucide="refresh-cw" id="sync-icon" class="w-4 h-4"></i> Actualizar Sheets
                 </button>
 
@@ -332,7 +332,7 @@
                             <th class="py-3 px-3">Enlace</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y border-slate-800/60 font-medium">
+                    <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium">
                     </tbody>
                 </table>
             </div>
@@ -352,18 +352,18 @@
         <div class="glass-panel bg-[#081226] rounded-2xl max-w-xl w-full p-6 space-y-4 border border-blue-500/30 shadow-2xl">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
-                    <i data-lucide="link" class="w-4 h-4 text-blue-400"></i> Configurar Enlace de Google Sheets
+                    <i data-lucide="link" class="w-4 h-4 text-blue-400"></i> Enlace de Google Sheets (data_pqrs)
                 </h3>
                 <button onclick="document.getElementById('config-modal').classList.add('hidden')" class="text-slate-400 hover:text-white text-lg">&times;</button>
             </div>
             
             <div class="bg-blue-950/40 border border-blue-500/30 p-3.5 rounded-xl text-xs text-blue-200 space-y-1.5">
-                <p>Pega aquí tu enlace publicado de Google Sheets (CSV) o enlace normal de compartir:</p>
+                <p>Pega aquí tu enlace de Google Sheets (Compartir &gt; Copiar enlace):</p>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-slate-300 mb-1">Enlace de Google Sheets</label>
-                <input type="text" id="sheet-url-input" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vRvMYDm9hO4V1wsvx5Fx4cT24a3QGE6HP-KCAfaudn3J8UFTJlzdCXJnCvaLtTnxI92V5LnN5fNqv2m/pub?gid=0&single=true&output=csv">
+                <input type="text" id="sheet-url-input" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500" value="https://docs.google.com/spreadsheets/d/1j53qJsUphh0IW6jxHYamzMCfljTgQwPoQsvVAE7XaBE/edit?usp=sharing">
             </div>
             
             <div class="flex justify-end gap-2.5">
@@ -375,7 +375,7 @@
         </div>
     </div>
 
-    <!-- Script Logic with Direct Fallback Seed Data -->
+    <!-- Script Logic con JSONP GViz (Sin CORS, Sin Proxy, 100% Nativo de Google) -->
     <script>
         let rawData = [];
         let currentTimeView = 'day';
@@ -384,7 +384,7 @@
         let charts = {};
 
         const DEFAULT_SHEET_KEY = "ALLIANZ_GSHEET_SAVED_URL";
-        const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvMYDm9hO4V1wsvx5Fx4cT24a3QGE6HP-KCAfaudn3J8UFTJlzdCXJnCvaLtTnxI92V5LnN5fNqv2m/pub?gid=0&single=true&output=csv";
+        const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/1j53qJsUphh0IW6jxHYamzMCfljTgQwPoQsvVAE7XaBE/edit?usp=sharing";
 
         const MONTH_MAP = {
             "1": "Enero", "01": "Enero", "ene": "Enero", "enero": "Enero", "jan": "Enero",
@@ -464,64 +464,70 @@
             lucide.createIcons();
             const savedUrl = localStorage.getItem(DEFAULT_SHEET_KEY) || DEFAULT_URL;
             document.getElementById('sheet-url-input').value = savedUrl;
-            forceLiveSync(savedUrl);
+            syncDataLive(savedUrl);
         }
 
-        function forceLiveSync(customUrl) {
+        function syncDataLive(customUrl) {
             const url = customUrl || localStorage.getItem(DEFAULT_SHEET_KEY) || document.getElementById('sheet-url-input').value.trim() || DEFAULT_URL;
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.add('animate-spin');
 
-            let csvTarget = url;
-            if (!csvTarget.includes('output=csv') && !csvTarget.includes('export?format=csv')) {
-                csvTarget = csvTarget.replace(/\/edit.*$/, '') + '/export?format=csv';
+            const idMatch = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            if (idMatch && idMatch[1]) {
+                const sheetId = idMatch[1];
+                const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:handleGvizResponse&sheet=data_pqrs&tq=`;
+                
+                const oldScript = document.getElementById('gviz-jsonp-script');
+                if (oldScript) oldScript.remove();
+
+                const script = document.createElement('script');
+                script.id = 'gviz-jsonp-script';
+                script.src = gvizUrl;
+                script.onerror = function() {
+                    if (syncIcon) syncIcon.classList.remove('animate-spin');
+                    document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Error de acceso (Revisar Permisos)`;
+                };
+                document.body.appendChild(script);
             }
-
-            const proxy1 = `https://corsproxy.io/?${encodeURIComponent(csvTarget)}`;
-            const proxy2 = `https://api.allorigins.win/raw?url=${encodeURIComponent(csvTarget)}`;
-
-            tryFetchCsv(csvTarget, function(success) {
-                if (success) return finishSync();
-                tryFetchCsv(proxy1, function(success2) {
-                    if (success2) return finishSync();
-                    tryFetchCsv(proxy2, function(success3) {
-                        finishSync();
-                    });
-                });
-            });
         }
 
-        function finishSync() {
+        window.handleGvizResponse = function(response) {
             const syncIcon = document.getElementById('sync-icon');
             if (syncIcon) syncIcon.classList.remove('animate-spin');
-        }
 
-        function tryFetchCsv(targetUrl, callback) {
-            Papa.parse(targetUrl, {
-                download: true,
-                header: true,
-                skipEmptyLines: 'greedy',
-                complete: function(res) {
-                    if (res.data && res.data.length > 0) {
-                        mapRawJsonToDashboard(res.data);
-                        document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${res.data.length.toLocaleString()} filas)`;
-                        callback(true);
-                    } else {
-                        callback(false);
-                    }
-                },
-                error: function() {
-                    callback(false);
-                }
+            if (!response || !response.table) {
+                document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Pestaña data_pqrs no encontrada`;
+                return;
+            }
+
+            const cols = response.table.cols.map(c => (c && c.label) ? c.label.trim() : '');
+            const rows = response.table.rows;
+
+            const jsonRows = [];
+            rows.forEach(r => {
+                const item = {};
+                r.c.forEach((cell, idx) => {
+                    const colName = cols[idx] || `Col_${idx}`;
+                    let val = '';
+                    if (cell && cell.f) val = cell.f;
+                    else if (cell && cell.v !== null && cell.v !== undefined) val = cell.v;
+                    item[colName] = val;
+                });
+                jsonRows.push(item);
             });
-        }
+
+            if (jsonRows.length > 0) {
+                mapRawJsonToDashboard(jsonRows);
+                document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${jsonRows.length.toLocaleString()} filas)`;
+            }
+        };
 
         function saveAndSyncSheetUrl() {
             const url = document.getElementById('sheet-url-input').value.trim();
             if (!url) return;
             localStorage.setItem(DEFAULT_SHEET_KEY, url);
             document.getElementById('config-modal').classList.add('hidden');
-            forceLiveSync(url);
+            syncDataLive(url);
         }
 
         function handleExcelUpload(event) {
@@ -698,13 +704,11 @@
         function updateKPIs(data) {
             const total = data.length;
             
-            // 1. Inflow & Respuestas
             const conResp = data.filter(d => d.respuestaCM && d.respuestaCM.trim() !== "" && d.respuestaCM.toLowerCase() !== "sin respuesta").length;
             const respPct = total ? Math.round((conResp / total) * 100) : 0;
             document.getElementById('kpi-total-inflow').textContent = total.toLocaleString();
             document.getElementById('kpi-resp-rate').textContent = `${conResp.toLocaleString()} (${respPct}%)`;
 
-            // 2. Marcas
             const allianzColCount = data.filter(d => d.marcas === "Allianz Colombia").length;
             const fundacionCount = data.filter(d => d.marcas === "Fundación Allianz").length;
             const allianzColPct = total ? Math.round((allianzColCount / total) * 100) : 0;
@@ -715,7 +719,6 @@
             document.getElementById('kpi-pct-allianz').textContent = `${allianzColCount.toLocaleString()} (${allianzColPct}%)`;
             document.getElementById('kpi-pct-fundacion').textContent = `${fundacionCount.toLocaleString()} (${fundacionPct}%)`;
 
-            // 3. Escalados
             const escalados = data.filter(d => {
                 const esc = (d.escalado || '').toString().toLowerCase().trim();
                 return esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
@@ -739,7 +742,6 @@
             document.getElementById('kpi-esc-abiertos').textContent = `${statusAbiertos.toLocaleString()} (${abPct}%)`;
             document.getElementById('kpi-esc-cerrados').textContent = `${statusCerrados.toLocaleString()} (${cePct}%)`;
 
-            // 4. Sentimiento
             const posCount = data.filter(d => d.experiencia === "Positiva").length;
             const neuCount = data.filter(d => d.experiencia === "Neutra").length;
             const negCount = data.filter(d => d.experiencia === "Negativa").length;
