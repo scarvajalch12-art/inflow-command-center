@@ -77,8 +77,8 @@
     <!-- Main Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <!-- Multidimensional Filters Panel con Multi-Select por Checkboxes -->
-        <section class="glass-panel rounded-2xl p-5 shadow-2xl">
+        <!-- Multidimensional Filters Panel con Multi-Select por Checkboxes y Z-Index corregido -->
+        <section class="glass-panel rounded-2xl p-5 shadow-2xl relative z-40">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 border-b border-slate-800/80 pb-3">
                 <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
                     <i data-lucide="check-square" class="w-4 h-4"></i> Filtros de Selección Múltiple
@@ -100,7 +100,7 @@
                         <span id="label-ano" class="truncate font-medium">Todos los Años</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-ano" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-ano" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -111,7 +111,7 @@
                         <span id="label-mes" class="truncate font-medium">Todos los Meses</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-mes" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-mes" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -122,7 +122,7 @@
                         <span id="label-week" class="truncate font-medium">Todas las Semanas</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-week" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-week" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -133,7 +133,7 @@
                         <span id="label-dia" class="truncate font-medium">Todos los Días</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-dia" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-dia" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
             </div>
@@ -147,7 +147,7 @@
                         <span id="label-canal" class="truncate font-medium">Todos los Canales</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-canal" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-canal" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -158,7 +158,7 @@
                         <span id="label-medio" class="truncate font-medium">Todos los Medios</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-medio" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-medio" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -169,7 +169,7 @@
                         <span id="label-motivo" class="truncate font-medium">Todos los Motivos</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-motivo" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-motivo" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -180,7 +180,7 @@
                         <span id="label-marcas" class="truncate font-medium">Todas las Marcas</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-marcas" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-marcas" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-slate-700 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
 
@@ -191,14 +191,14 @@
                         <span id="label-escalado" class="truncate">Todos los Casos</span>
                         <i data-lucide="chevron-down" class="w-4 h-4 text-amber-400 shrink-0"></i>
                     </button>
-                    <div id="dropdown-escalado" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-amber-500/40 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    <div id="dropdown-escalado" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#081226] border border-amber-500/40 rounded-xl shadow-2xl z-50 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
                     </div>
                 </div>
             </div>
         </section>
 
         <!-- Executive KPI Cards Section -->
-        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
             
             <!-- 1. Total Inflow & Response Rate -->
             <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-blue-500/50 transition flex flex-col justify-between">
@@ -238,7 +238,7 @@
                 </div>
             </div>
 
-            <!-- 3. Casos Escalados (Discriminación en 3 Escenarios) -->
+            <!-- 3. Casos Escalados (3 Escenarios) -->
             <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-amber-500/50 transition flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
@@ -277,7 +277,7 @@
         </section>
 
         <!-- Timeline Chart -->
-        <section class="glass-panel rounded-2xl p-5 shadow-2xl">
+        <section class="glass-panel rounded-2xl p-5 shadow-2xl relative z-10">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4">
                 <div>
                     <h2 id="timeline-title" class="text-base font-bold text-white flex items-center gap-2">
@@ -296,7 +296,7 @@
         </section>
 
         <!-- 4 Visual Breakdowns: Canal, Medio, Motivo, Estatus Escalados -->
-        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 relative z-10">
             <!-- 1. Canal -->
             <div class="glass-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
                 <div class="flex justify-between items-center mb-3">
@@ -351,7 +351,7 @@
         </section>
 
         <!-- Dynamic Executive Report Hub -->
-        <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 border border-blue-500/30">
+        <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 border border-blue-500/30 relative z-10">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-800/80 pb-3">
                 <div>
                     <h3 class="text-base font-extrabold text-white flex items-center gap-2">
@@ -371,7 +371,7 @@
                 </div>
             </div>
 
-            <!-- Selectores para Overall Week (2 Semanas) -->
+            <!-- Selectores para Overall Week -->
             <div id="weekly-comparator-controls" class="hidden bg-blue-950/30 border border-blue-500/30 rounded-xl p-3.5 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                 <div>
                     <label class="block text-slate-300 font-bold mb-1">Semana Base (Semana A - Anterior):</label>
@@ -385,7 +385,7 @@
                 </div>
             </div>
 
-            <!-- Selectores para Cierre Mensual (Mes Actual vs Mes Anterior) -->
+            <!-- Selectores para Cierre Mensual -->
             <div id="monthly-comparator-controls" class="hidden bg-cyan-950/30 border border-cyan-500/30 rounded-xl p-3.5 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                 <div>
                     <label class="block text-slate-300 font-bold mb-1">Mes a Evaluar (Mes Actual):</label>
@@ -406,7 +406,7 @@
         </section>
 
         <!-- Detailed Table -->
-        <section class="glass-panel rounded-2xl p-5 shadow-2xl space-y-4">
+        <section class="glass-panel rounded-2xl p-5 shadow-2xl space-y-4 relative z-10">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                 <div>
                     <h3 class="text-base font-bold text-white flex items-center gap-2">
@@ -749,7 +749,6 @@
             renderDashboard();
         }
 
-        // Lógica de Desplegables con Checkboxes Multi-select
         function populateFilterOptions() {
             const getUnique = key => [...new Set(rawData.map(d => d[key]).filter(Boolean))].sort();
             
