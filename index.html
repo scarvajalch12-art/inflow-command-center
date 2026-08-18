@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Allianz Command Center | Live Dashboard</title>
+    <title>💙 Allianz Colombia | Seguro Estamos 📊</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Chart.js CDN -->
@@ -32,7 +32,7 @@
 </head>
 <body class="min-h-screen flex flex-col custom-scrollbar">
 
-    <!-- Header -->
+    <!-- Header con el nuevo Logo/Lema Superior -->
     <header class="border-b border-slate-800/90 bg-[#081226]/95 backdrop-blur sticky top-0 z-50 shadow-2xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-3.5">
@@ -40,10 +40,10 @@
                     <i data-lucide="shield"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
-                        Allianz Inflow Command Center <span id="connection-status" class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Conectando...</span>
+                    <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2 flex-wrap">
+                        💙 Allianz Colombia | Seguro Estamos 📊 <span id="connection-status" class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Conectando...</span>
                     </h1>
-                    <p class="text-xs text-slate-400">Social Listening, Sentimiento, Escalados & Desglose por Marcas</p>
+                    <p class="text-xs text-slate-400 font-medium">Command Center Ejecutivo • Inflow, Sentimiento, Escalados & Desglose por Marcas</p>
                 </div>
             </div>
 
@@ -332,7 +332,7 @@
                             <th class="py-3 px-3">Enlace</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y border-slate-800/60 font-medium">
+                    <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium">
                     </tbody>
                 </table>
             </div>
@@ -377,7 +377,7 @@
 
     <!-- Script Logic -->
     <script>
-        // Set Chart.js global defaults for maximum legibility on dark theme
+        // Configuración global para legibilidad máxima en fondo oscuro
         Chart.defaults.color = '#ffffff';
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
@@ -479,7 +479,8 @@
             const idMatch = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
             if (idMatch && idMatch[1]) {
                 const sheetId = idMatch[1];
-                const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:handleGvizResponse&sheet=data_pqrs&tq=`;
+                const timestamp = new Date().getTime();
+                const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:handleGvizResponse&sheet=data_pqrs&tq=&_nocache=${timestamp}`;
                 
                 const oldScript = document.getElementById('gviz-jsonp-script');
                 if (oldScript) oldScript.remove();
@@ -489,7 +490,7 @@
                 script.src = gvizUrl;
                 script.onerror = function() {
                     if (syncIcon) syncIcon.classList.remove('animate-spin');
-                    document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Error de acceso`;
+                    document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Error de acceso (Verificar permisos)`;
                 };
                 document.body.appendChild(script);
             }
