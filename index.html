@@ -30,7 +30,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col custom-scrollbar">
+<body class="min-h-screen flex flex-col custom-scrollbar" onclick="closeAllDropdowns(event)">
 
     <!-- Header -->
     <header class="border-b border-slate-800/90 bg-[#081226]/95 backdrop-blur sticky top-0 z-50 shadow-2xl">
@@ -43,7 +43,7 @@
                     <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2 flex-wrap">
                         💙 Allianz Colombia | Seguro Estamos 📊 <span id="connection-status" class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span> Conectando...</span>
                     </h1>
-                    <p class="text-xs text-slate-400 font-medium">Command Center Ejecutivo • Inflow, Sentimiento, Escalados & Desglose por Marcas</p>
+                    <p class="text-xs text-slate-400 font-medium">Command Center Ejecutivo • Inflow, Sentimiento, Escalados & Desglose Multidimensional</p>
                 </div>
             </div>
 
@@ -77,11 +77,11 @@
     <!-- Main Container -->
     <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-        <!-- Multidimensional Filters Panel -->
+        <!-- Multidimensional Filters Panel con Multi-Select por Checkboxes -->
         <section class="glass-panel rounded-2xl p-5 shadow-2xl">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 border-b border-slate-800/80 pb-3">
                 <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
-                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Filtros de Segmentación Inteligente
+                    <i data-lucide="check-square" class="w-4 h-4"></i> Filtros de Selección Múltiple
                 </div>
                 <div class="flex items-center gap-3">
                     <span id="filtered-records-counter" class="text-xs font-medium text-slate-400">Cargando registros...</span>
@@ -91,66 +91,108 @@
                 </div>
             </div>
 
-            <!-- Row 1: Time Filters -->
+            <!-- Row 1: Time Multi-select Filters -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Año</label>
-                    <select id="filter-ano" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todos los Años</option>
-                    </select>
+                <!-- Multi Año -->
+                <div class="relative dropdown-container" id="dropdown-ano-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Año(s)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-ano')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-ano" class="truncate font-medium">Todos los Años</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-ano" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Mes</label>
-                    <select id="filter-mes" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todos los Meses</option>
-                    </select>
+
+                <!-- Multi Mes -->
+                <div class="relative dropdown-container" id="dropdown-mes-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Mes(es)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-mes')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-mes" class="truncate font-medium">Todos los Meses</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-mes" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Semana (Week)</label>
-                    <select id="filter-week" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todas las Semanas</option>
-                    </select>
+
+                <!-- Multi Semana -->
+                <div class="relative dropdown-container" id="dropdown-week-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Semana(s) (Week)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-week')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-week" class="truncate font-medium">Todas las Semanas</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-week" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Fecha Específica (Día)</label>
-                    <input type="date" id="filter-dia" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500">
+
+                <!-- Multi Días Específicos -->
+                <div class="relative dropdown-container" id="dropdown-dia-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Día(s) Específico(s)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-dia')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-dia" class="truncate font-medium">Todos los Días</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-dia" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
             </div>
 
-            <!-- Row 2: Categorical Filters (Con los 3 Escenarios de Escalados) -->
+            <!-- Row 2: Categorical Multi-select Filters -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3 text-xs">
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Canal</label>
-                    <select id="filter-canal" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todos los Canales</option>
-                    </select>
+                <!-- Multi Canal -->
+                <div class="relative dropdown-container" id="dropdown-canal-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Canal(es)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-canal')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-canal" class="truncate font-medium">Todos los Canales</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-canal" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Medio</label>
-                    <select id="filter-medio" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todos los Medios</option>
-                    </select>
+
+                <!-- Multi Medio -->
+                <div class="relative dropdown-container" id="dropdown-medio-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Medio(s)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-medio')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-medio" class="truncate font-medium">Todos los Medios</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-medio" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Motivo</label>
-                    <select id="filter-motivo" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todos los Motivos</option>
-                    </select>
+
+                <!-- Multi Motivo -->
+                <div class="relative dropdown-container" id="dropdown-motivo-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Motivo(s)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-motivo')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-motivo" class="truncate font-medium">Todos los Motivos</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-motivo" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-slate-400 mb-1 font-semibold">Marca / Plataforma</label>
-                    <select id="filter-marcas" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
-                        <option value="ALL">Todas las Marcas</option>
-                    </select>
+
+                <!-- Multi Marca -->
+                <div class="relative dropdown-container" id="dropdown-marcas-container">
+                    <label class="block text-slate-400 mb-1 font-semibold">Marca(s)</label>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-marcas')" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-left text-slate-200 flex justify-between items-center">
+                        <span id="label-marcas" class="truncate font-medium">Todas las Marcas</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-slate-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-marcas" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-slate-700 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
-                <div>
+
+                <!-- Multi Escalados -->
+                <div class="relative dropdown-container" id="dropdown-escalado-container">
                     <label class="block text-amber-400 mb-1 font-bold">⚠️ Casos Escalados</label>
-                    <select id="filter-escalado-cat" onchange="applyFilters()" class="w-full bg-slate-900 border border-amber-500/50 rounded-xl px-3 py-2 text-amber-300 font-semibold focus:outline-none focus:border-amber-400">
-                        <option value="ALL">Todos los Casos</option>
-                        <option value="VERDADERO_ABIERTO">Verdadero - Abiertos</option>
-                        <option value="VERDADERO_CERRADO">Verdadero - Cerrados</option>
-                        <option value="FALSO">Falso - No es queja / Sin escalar</option>
-                    </select>
+                    <button type="button" onclick="toggleDropdown(event, 'dropdown-escalado')" class="w-full bg-slate-900 border border-amber-500/50 rounded-xl px-3 py-2 text-left text-amber-300 flex justify-between items-center font-semibold">
+                        <span id="label-escalado" class="truncate">Todos los Casos</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-amber-400 shrink-0"></i>
+                    </button>
+                    <div id="dropdown-escalado" class="hidden absolute left-0 top-full mt-1.5 w-full bg-[#09152e] border border-amber-500/40 rounded-xl shadow-2xl z-30 p-2 max-h-56 overflow-y-auto custom-scrollbar space-y-1">
+                    </div>
                 </div>
             </div>
         </section>
@@ -196,7 +238,7 @@
                 </div>
             </div>
 
-            <!-- 3. Casos Escalados (Discriminación Exacta en 3 Escenarios) -->
+            <!-- 3. Casos Escalados (Discriminación en 3 Escenarios) -->
             <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-amber-500/50 transition flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
@@ -308,7 +350,7 @@
             </div>
         </section>
 
-        <!-- Dynamic Executive Report Hub (Diario, Semanal & Mensual) -->
+        <!-- Dynamic Executive Report Hub -->
         <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 border border-blue-500/30">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-800/80 pb-3">
                 <div>
@@ -452,6 +494,19 @@
         const rowsPerPage = 10;
         let charts = {};
 
+        // Estado de selección múltiple (Sets)
+        const selectedFilters = {
+            ano: new Set(),
+            mes: new Set(),
+            week: new Set(),
+            dia: new Set(),
+            canal: new Set(),
+            medio: new Set(),
+            motivo: new Set(),
+            marcas: new Set(),
+            escalado: new Set()
+        };
+
         const DEFAULT_SHEET_KEY = "ALLIANZ_GSHEET_SAVED_URL";
         const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/1j53qJsUphh0IW6jxHYamzMCfljTgQwPoQsvVAE7XaBE/edit?usp=sharing";
 
@@ -472,8 +527,6 @@
             "12": "Diciembre", "dic": "Diciembre", "diciembre": "Diciembre", "dec": "Diciembre"
         };
 
-        // Función para clasificar exactamente en 3 categorías:
-        // 'VERDADERO_ABIERTO', 'VERDADERO_CERRADO', 'FALSO'
         function getEscaladoCategory(row) {
             const rawStatus = (row.statusEscalado || '').toString().toLowerCase().trim();
             const rawEsc = (row.escalado || '').toString().toLowerCase().trim();
@@ -484,13 +537,10 @@
             if (rawStatus.includes('cerrado') || rawStatus.includes('resuelto') || rawStatus.includes('solucionado')) {
                 return 'VERDADERO_CERRADO';
             }
-            
-            // Si el estado no define pero el flag de escalado está en sí
             if (rawEsc === 'true' || rawEsc === 'sí' || rawEsc === 'si' || rawEsc === 'yes') {
-                return 'VERDADERO_ABIERTO'; // Default escalado activo
+                return 'VERDADERO_ABIERTO';
             }
-
-            return 'FALSO'; // No es una queja / Sin escalar
+            return 'FALSO';
         }
 
         function normalizeDateToYYYYMMDD(val) {
@@ -699,19 +749,125 @@
             renderDashboard();
         }
 
+        // Lógica de Desplegables con Checkboxes Multi-select
         function populateFilterOptions() {
             const getUnique = key => [...new Set(rawData.map(d => d[key]).filter(Boolean))].sort();
-            fillSelect('filter-ano', getUnique('ano'));
+            
+            buildMultiSelectDropdown('dropdown-ano', 'ano', getUnique('ano'), 'Todos los Años');
             
             const rawMonths = getUnique('mes');
             const sortedMonths = CALENDAR_MONTHS.filter(m => rawMonths.includes(m)).concat(rawMonths.filter(m => !CALENDAR_MONTHS.includes(m)));
-            fillSelect('filter-mes', sortedMonths);
+            buildMultiSelectDropdown('dropdown-mes', 'mes', sortedMonths, 'Todos los Meses');
 
-            fillSelect('filter-week', getUnique('week'));
-            fillSelect('filter-canal', getUnique('canal'));
-            fillSelect('filter-medio', getUnique('medio'));
-            fillSelect('filter-motivo', getUnique('motivo'));
-            fillSelect('filter-marcas', ["Allianz Colombia", "Fundación Allianz"]);
+            buildMultiSelectDropdown('dropdown-week', 'week', getUnique('week'), 'Todas las Semanas');
+            buildMultiSelectDropdown('dropdown-dia', 'dia', getUnique('fechaSol'), 'Todos los Días');
+            buildMultiSelectDropdown('dropdown-canal', 'canal', getUnique('canal'), 'Todos los Canales');
+            buildMultiSelectDropdown('dropdown-medio', 'medio', getUnique('medio'), 'Todos los Medios');
+            buildMultiSelectDropdown('dropdown-motivo', 'motivo', getUnique('motivo'), 'Todos los Motivos');
+            buildMultiSelectDropdown('dropdown-marcas', 'marcas', ["Allianz Colombia", "Fundación Allianz"], 'Todas las Marcas');
+
+            const escaladoOptions = [
+                { value: 'VERDADERO_ABIERTO', label: 'Verdadero - Abiertos' },
+                { value: 'VERDADERO_CERRADO', label: 'Verdadero - Cerrados' },
+                { value: 'FALSO', label: 'Falso - No es queja / Sin escalar' }
+            ];
+            buildMultiSelectDropdown('dropdown-escalado', 'escalado', escaladoOptions, 'Todos los Casos', true);
+        }
+
+        function buildMultiSelectDropdown(containerId, filterKey, items, defaultLabel, isObjectList = false) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            let html = `
+                <div class="flex justify-between items-center pb-1 mb-1 border-b border-slate-800 text-[11px]">
+                    <button type="button" onclick="selectAllInDropdown('${filterKey}', true)" class="text-cyan-400 hover:underline">Marcar Todos</button>
+                    <button type="button" onclick="selectAllInDropdown('${filterKey}', false)" class="text-rose-400 hover:underline">Desmarcar</button>
+                </div>
+            `;
+
+            items.forEach(item => {
+                const val = isObjectList ? item.value : item;
+                const lab = isObjectList ? item.label : item;
+                const isChecked = selectedFilters[filterKey].has(val);
+
+                html += `
+                    <label class="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-800/80 cursor-pointer text-slate-200 text-xs transition">
+                        <input type="checkbox" value="${val}" ${isChecked ? 'checked' : ''} onchange="handleMultiSelectChange('${filterKey}', this.value, this.checked)" class="rounded border-slate-700 bg-slate-950 text-blue-500 focus:ring-0 w-3.5 h-3.5">
+                        <span class="truncate">${lab}</span>
+                    </label>
+                `;
+            });
+
+            container.innerHTML = html;
+            updateDropdownButtonLabel(filterKey, defaultLabel);
+        }
+
+        function toggleDropdown(event, dropdownId) {
+            event.stopPropagation();
+            const el = document.getElementById(dropdownId);
+            const isHidden = el.classList.contains('hidden');
+            closeAllDropdowns();
+            if (isHidden) el.classList.remove('hidden');
+        }
+
+        function closeAllDropdowns(event) {
+            if (event && event.target.closest('.dropdown-container')) return;
+            document.querySelectorAll('.dropdown-container > div[id^="dropdown-"]').forEach(d => {
+                d.classList.add('hidden');
+            });
+        }
+
+        function handleMultiSelectChange(filterKey, value, isChecked) {
+            if (isChecked) {
+                selectedFilters[filterKey].add(value);
+            } else {
+                selectedFilters[filterKey].delete(value);
+            }
+            const defaultLabels = {
+                ano: 'Todos los Años', mes: 'Todos los Meses', week: 'Todas las Semanas', dia: 'Todos los Días',
+                canal: 'Todos los Canales', medio: 'Todos los Medios', motivo: 'Todos los Motivos', marcas: 'Todas las Marcas',
+                escalado: 'Todos los Casos'
+            };
+            updateDropdownButtonLabel(filterKey, defaultLabels[filterKey]);
+            applyFilters();
+        }
+
+        function selectAllInDropdown(filterKey, selectAll) {
+            const container = document.getElementById(`dropdown-${filterKey}`);
+            if (!container) return;
+            const checkboxes = container.querySelectorAll('input[type="checkbox"]');
+            
+            selectedFilters[filterKey].clear();
+            checkboxes.forEach(cb => {
+                cb.checked = selectAll;
+                if (selectAll) selectedFilters[filterKey].add(cb.value);
+            });
+
+            const defaultLabels = {
+                ano: 'Todos los Años', mes: 'Todos los Meses', week: 'Todas las Semanas', dia: 'Todos los Días',
+                canal: 'Todos los Canales', medio: 'Todos los Medios', motivo: 'Todos los Motivos', marcas: 'Todas las Marcas',
+                escalado: 'Todos los Casos'
+            };
+            updateDropdownButtonLabel(filterKey, defaultLabels[filterKey]);
+            applyFilters();
+        }
+
+        function updateDropdownButtonLabel(filterKey, defaultLabel) {
+            const labelSpan = document.getElementById(`label-${filterKey}`);
+            if (!labelSpan) return;
+
+            const count = selectedFilters[filterKey].size;
+            if (count === 0) {
+                labelSpan.textContent = defaultLabel;
+                labelSpan.classList.remove('text-cyan-400', 'font-bold');
+            } else if (count === 1) {
+                const firstVal = Array.from(selectedFilters[filterKey])[0];
+                labelSpan.textContent = firstVal;
+                labelSpan.classList.add('text-cyan-400', 'font-bold');
+            } else {
+                labelSpan.textContent = `${count} seleccionados`;
+                labelSpan.classList.add('text-cyan-400', 'font-bold');
+            }
         }
 
         function populateComparatorSelects() {
@@ -750,42 +906,17 @@
             }
         }
 
-        function fillSelect(id, values) {
-            const select = document.getElementById(id);
-            const current = select.value;
-            select.innerHTML = '<option value="ALL">Todos</option>';
-            values.forEach(v => {
-                const opt = document.createElement('option');
-                opt.value = v;
-                opt.textContent = v;
-                select.appendChild(opt);
-            });
-            select.value = current || 'ALL';
-        }
-
         function getFilteredData() {
-            const ano = document.getElementById('filter-ano').value;
-            const mes = document.getElementById('filter-mes').value;
-            const week = document.getElementById('filter-week').value;
-            const dia = document.getElementById('filter-dia').value;
-            const canal = document.getElementById('filter-canal').value;
-            const medio = document.getElementById('filter-medio').value;
-            const motivo = document.getElementById('filter-motivo').value;
-            const marcas = document.getElementById('filter-marcas').value;
-            const escaladoCat = document.getElementById('filter-escalado-cat').value;
-
             return rawData.filter(d => {
-                if (ano !== 'ALL' && d.ano !== ano) return false;
-                if (mes !== 'ALL' && d.mes !== mes) return false;
-                if (week !== 'ALL' && d.week !== week) return false;
-                if (dia && d.fechaSol !== dia) return false;
-                if (canal !== 'ALL' && d.canal !== canal) return false;
-                if (medio !== 'ALL' && d.medio !== medio) return false;
-                if (motivo !== 'ALL' && d.motivo !== motivo) return false;
-                if (marcas !== 'ALL' && d.marcas !== marcas) return false;
-                
-                if (escaladoCat !== 'ALL' && d.escaladoCategory !== escaladoCat) return false;
-                
+                if (selectedFilters.ano.size > 0 && !selectedFilters.ano.has(d.ano)) return false;
+                if (selectedFilters.mes.size > 0 && !selectedFilters.mes.has(d.mes)) return false;
+                if (selectedFilters.week.size > 0 && !selectedFilters.week.has(d.week)) return false;
+                if (selectedFilters.dia.size > 0 && !selectedFilters.dia.has(d.fechaSol)) return false;
+                if (selectedFilters.canal.size > 0 && !selectedFilters.canal.has(d.canal)) return false;
+                if (selectedFilters.medio.size > 0 && !selectedFilters.medio.has(d.medio)) return false;
+                if (selectedFilters.motivo.size > 0 && !selectedFilters.motivo.has(d.motivo)) return false;
+                if (selectedFilters.marcas.size > 0 && !selectedFilters.marcas.has(d.marcas)) return false;
+                if (selectedFilters.escalado.size > 0 && !selectedFilters.escalado.has(d.escaladoCategory)) return false;
                 return true;
             });
         }
@@ -836,15 +967,9 @@
         }
 
         function resetFilters() {
-            document.getElementById('filter-ano').value = 'ALL';
-            document.getElementById('filter-mes').value = 'ALL';
-            document.getElementById('filter-week').value = 'ALL';
-            document.getElementById('filter-dia').value = '';
-            document.getElementById('filter-canal').value = 'ALL';
-            document.getElementById('filter-medio').value = 'ALL';
-            document.getElementById('filter-motivo').value = 'ALL';
-            document.getElementById('filter-marcas').value = 'ALL';
-            document.getElementById('filter-escalado-cat').value = 'ALL';
+            Object.keys(selectedFilters).forEach(k => selectedFilters[k].clear());
+            document.querySelectorAll('.dropdown-container input[type="checkbox"]').forEach(cb => cb.checked = false);
+            populateFilterOptions();
             applyFilters();
         }
 
@@ -883,7 +1008,7 @@
             document.getElementById('kpi-pct-allianz').textContent = `${allianzColCount.toLocaleString()} (${allianzColPct}%)`;
             document.getElementById('kpi-pct-fundacion').textContent = `${fundacionCount.toLocaleString()} (${fundacionPct}%)`;
 
-            // 3. Casos Escalados (Discriminación en los 3 Escenarios)
+            // 3. Casos Escalados (3 Escenarios)
             const countAbiertos = data.filter(d => d.escaladoCategory === 'VERDADERO_ABIERTO').length;
             const countCerrados = data.filter(d => d.escaladoCategory === 'VERDADERO_CERRADO').length;
             const countFalso = data.filter(d => d.escaladoCategory === 'FALSO').length;
@@ -935,15 +1060,10 @@
                 return;
             }
 
-            const diaFiltro = document.getElementById('filter-dia').value;
             let fechaTexto = "el periodo seleccionado";
-            if (diaFiltro) {
-                const parts = diaFiltro.split('-');
-                if (parts.length === 3) {
-                    const mesesNom = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-                    const mIdx = parseInt(parts[1], 10) - 1;
-                    fechaTexto = `El ${parseInt(parts[2], 10)} de ${mesesNom[mIdx] || 'agosto'} de ${parts[0]}`;
-                }
+            if (selectedFilters.dia.size > 0) {
+                const diasArr = Array.from(selectedFilters.dia);
+                fechaTexto = `Para ${diasArr.length === 1 ? 'la fecha ' + diasArr[0] : 'las fechas seleccionadas (' + diasArr.join(', ') + ')'}`;
             } else {
                 const firstDate = data[0].fechaSol;
                 if (firstDate && firstDate.includes('-')) {
@@ -1011,7 +1131,6 @@
             const negMotivoList = Object.entries(negMotivoCounts).sort((a, b) => b[1] - a[1]);
             const negMotivoBreakdownStr = negMotivoList.map(n => `${n[0]} (${n[1]})`).join(', ') || 'Sin fricciones registradas';
 
-            // Discriminación en 3 Escenarios para el informe
             const countAbiertos = data.filter(d => d.escaladoCategory === 'VERDADERO_ABIERTO').length;
             const countCerrados = data.filter(d => d.escaladoCategory === 'VERDADERO_CERRADO').length;
             const countFalso = data.filter(d => d.escaladoCategory === 'FALSO').length;
@@ -1033,7 +1152,7 @@
 
             const summaryHtml = `
                 <p class="font-bold text-slate-100">Hola equipo, comparto el cierre del día.</p>
-                <p>${fechaTexto}, la operación registró un total de <strong>${total} interacciones (Inflow)</strong> distribuidas en los canales. Durante este día, la percepción del cliente registró un <strong>${posPct}% de satisfacción positiva (${posCount} casos)</strong>, un <strong>${neuPct}% de postura neutra (${neuCount} casos)</strong>, mientras que el <strong>${negPct}% restante correspondió a una experiencia negativa (${negCount} casos)</strong>. ${canalList.map(c => c[0]).join(', ')} se consolidaron como los canales de atención, con un comportamiento orientado principalmente hacia ${medioList.map(m => m[0].toLowerCase()).join(', ')}.</p>
+                <p>${fechaTexto}, la operación registró un total de <strong>${total} interacciones (Inflow)</strong> distribuidas en los canales. Durante este periodo, la percepción del cliente registró un <strong>${posPct}% de satisfacción positiva (${posCount} casos)</strong>, un <strong>${neuPct}% de postura neutra (${neuCount} casos)</strong>, mientras que el <strong>${negPct}% restante correspondió a una experiencia negativa (${negCount} casos)</strong>. ${canalList.map(c => c[0]).join(', ')} se consolidaron como los canales de atención, con un comportamiento orientado principalmente hacia ${medioList.map(m => m[0].toLowerCase()).join(', ')}.</p>
                 
                 <div class="pt-2">
                     <p class="font-extrabold text-cyan-400 tracking-wide uppercase text-[11px] mb-1">Key Insights</p>
@@ -1041,7 +1160,7 @@
                         <li><strong>Dominio de ${topCanalName}:</strong> ${topCanalName} lideró la conversación concentrando el ${topCanalPct}% del tráfico total (${topCanalCount} interacciones), seguido por ${canalBreakdownStr}.</li>
                         <li><strong>Referencia por tipo de contacto:</strong> ${medioBreakdownStr}.</li>
                         <li><strong>Predominio de experiencias destacadas:</strong> ${posMotivoText}</li>
-                        <li><strong>Nivel de fricción:</strong> Se registraron ${negCount} casos de Experiencia Negativa en el día (${negPct}% del Inflow), distribuidos en ${negMotivoBreakdownStr}.</li>
+                        <li><strong>Nivel de fricción:</strong> Se registraron ${negCount} casos de Experiencia Negativa en el periodo (${negPct}% del Inflow), distribuidos en ${negMotivoBreakdownStr}.</li>
                     </ul>
                 </div>
 
@@ -1125,7 +1244,6 @@
             const negGenPctA = totalA > 0 ? ((negGenA / totalA) * 100).toFixed(1) : 0;
             const negGenPctB = totalB > 0 ? ((negGenB / totalB) * 100).toFixed(1) : 0;
 
-            // Discriminación en 3 Escenarios en Semana B
             const countAbiertosB = dataB.filter(d => d.escaladoCategory === 'VERDADERO_ABIERTO').length;
             const countCerradosB = dataB.filter(d => d.escaladoCategory === 'VERDADERO_CERRADO').length;
             const countFalsoB = dataB.filter(d => d.escaladoCategory === 'FALSO').length;
@@ -1265,7 +1383,6 @@
                 return `<strong>${mName}:</strong> ${topMot ? topMot[0] : 'Consultas generales'}`;
             }).join('<br>');
 
-            // Discriminación en 3 Escenarios para el mes
             const countAbiertosM = dataCurr.filter(d => d.escaladoCategory === 'VERDADERO_ABIERTO').length;
             const countCerradosM = dataCurr.filter(d => d.escaladoCategory === 'VERDADERO_CERRADO').length;
             const countFalsoM = dataCurr.filter(d => d.escaladoCategory === 'FALSO').length;
