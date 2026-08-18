@@ -32,7 +32,7 @@
 </head>
 <body class="min-h-screen flex flex-col custom-scrollbar">
 
-    <!-- Header con el nuevo Logo/Lema Superior -->
+    <!-- Header -->
     <header class="border-b border-slate-800/90 bg-[#081226]/95 backdrop-blur sticky top-0 z-50 shadow-2xl">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div class="flex items-center gap-3.5">
@@ -166,7 +166,7 @@
                 </div>
             </div>
 
-            <!-- 2. Marcas Inflow (Allianz Colombia vs Fundación Allianz) -->
+            <!-- 2. Marcas Inflow -->
             <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-cyan-500/50 transition flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
@@ -187,7 +187,7 @@
                 </div>
             </div>
 
-            <!-- 3. Casos Escalados & Estatus Detallados -->
+            <!-- 3. Casos Escalados -->
             <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-amber-500/50 transition flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
@@ -204,7 +204,7 @@
                 </div>
             </div>
 
-            <!-- 4. Experiencia / Sentimiento (Positivo, Neutro, Negativo) -->
+            <!-- 4. Sentimiento -->
             <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-purple-500/50 transition flex flex-col justify-between">
                 <div class="flex justify-between items-start">
                     <div>
@@ -298,6 +298,61 @@
             </div>
         </section>
 
+        <!-- Dynamic Executive Report Hub (Diario, Semanal & Mensual) -->
+        <section class="glass-panel rounded-2xl p-6 shadow-2xl space-y-4 border border-blue-500/30">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-slate-800/80 pb-3">
+                <div>
+                    <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                        <i data-lucide="sparkles" class="w-5 h-5 text-cyan-400"></i> Generador de Informes Inteligentes (Smart Summary)
+                    </h3>
+                    <p class="text-xs text-slate-400">Genera automáticamente el informe oficial ejecutivo: Diario, Comparativo de 2 Semanas o Cierre Mensual</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <div class="bg-slate-900 border border-slate-700/80 p-1 rounded-xl flex items-center text-xs font-semibold">
+                        <button id="tab-summary-day" onclick="setSummaryMode('day')" class="px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow">Cierre Diario</button>
+                        <button id="tab-summary-week" onclick="setSummaryMode('week')" class="px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white">Overall Week</button>
+                        <button id="tab-summary-month" onclick="setSummaryMode('month')" class="px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white">Cierre Mensual</button>
+                    </div>
+                    <button onclick="copySummaryText()" id="copy-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow">
+                        <i data-lucide="copy" class="w-4 h-4"></i> Copiar Texto
+                    </button>
+                </div>
+            </div>
+
+            <!-- Selectores para Overall Week (2 Semanas) -->
+            <div id="weekly-comparator-controls" class="hidden bg-blue-950/30 border border-blue-500/30 rounded-xl p-3.5 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">Semana Base (Semana A - Anterior):</label>
+                    <select id="compare-week-a" onchange="renderExecutiveSummary()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">Semana Comparativa (Semana B - Reciente):</label>
+                    <select id="compare-week-b" onchange="renderExecutiveSummary()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                    </select>
+                </div>
+            </div>
+
+            <!-- Selectores para Cierre Mensual (Mes Actual vs Mes Anterior) -->
+            <div id="monthly-comparator-controls" class="hidden bg-cyan-950/30 border border-cyan-500/30 rounded-xl p-3.5 text-xs grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">Mes a Evaluar (Mes Actual):</label>
+                    <select id="compare-month-current" onchange="renderExecutiveSummary()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-300 font-bold mb-1">Mes de Comparación (Mes Anterior):</label>
+                    <select id="compare-month-prev" onchange="renderExecutiveSummary()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-cyan-500">
+                    </select>
+                </div>
+            </div>
+
+            <!-- Summary Output Box -->
+            <div class="bg-[#050b1a] rounded-xl p-5 border border-slate-800 text-xs text-slate-200 leading-relaxed font-sans space-y-4 select-all custom-scrollbar overflow-x-auto" id="executive-summary-content">
+                <p class="text-slate-500 italic">Cargando reporte ejecutivo con los datos seleccionados...</p>
+            </div>
+        </section>
+
         <!-- Detailed Table -->
         <section class="glass-panel rounded-2xl p-5 shadow-2xl space-y-4">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
@@ -332,7 +387,7 @@
                             <th class="py-3 px-3">Enlace</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium">
+                    <tbody id="table-body" class="divide-y border-slate-800/60 font-medium">
                     </tbody>
                 </table>
             </div>
@@ -377,18 +432,20 @@
 
     <!-- Script Logic -->
     <script>
-        // Configuración global para legibilidad máxima en fondo oscuro
         Chart.defaults.color = '#ffffff';
         Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
 
         let rawData = [];
         let currentTimeView = 'day';
+        let currentSummaryMode = 'day';
         let currentPage = 1;
         const rowsPerPage = 10;
         let charts = {};
 
         const DEFAULT_SHEET_KEY = "ALLIANZ_GSHEET_SAVED_URL";
         const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/1j53qJsUphh0IW6jxHYamzMCfljTgQwPoQsvVAE7XaBE/edit?usp=sharing";
+
+        const CALENDAR_MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
         const MONTH_MAP = {
             "1": "Enero", "01": "Enero", "ene": "Enero", "enero": "Enero", "jan": "Enero",
@@ -572,7 +629,7 @@
                     marcaClean = "Fundación Allianz";
                 }
 
-                let rawStatus = (r["Status Casos Escalados"] || r["statusEscalado"] || "No aplica").toString().trim();
+                let rawStatus = (r["Status Casos Escalados"] || r["statusEscalado"] || "No es una queja").toString().trim();
 
                 let rawExp = (r["Experiencia"] || r["experiencia"] || "Neutra").toString().trim();
                 let expClean = "Neutra";
@@ -589,7 +646,7 @@
                     motivo: (r["Motivo"] || r["motivo"] || "").toString().trim(),
                     datosPersonales: (r["Datos Personales"] || "").toString().trim(),
                     marcas: marcaClean,
-                    eventos: (r["Eventos"] || "").toString().trim(),
+                    eventos: (r["Eventos"] || r["Evento"] || "").toString().trim(),
                     experiencia: expClean,
                     usuario: (r["Nombre usuario"] || r["usuario"] || "").toString().trim(),
                     comentario: (r["Detalle comentario"] || r["comentario"] || "").toString().trim(),
@@ -604,6 +661,7 @@
             });
 
             populateFilterOptions();
+            populateComparatorSelects();
             renderDashboard();
         }
 
@@ -611,9 +669,8 @@
             const getUnique = key => [...new Set(rawData.map(d => d[key]).filter(Boolean))].sort();
             fillSelect('filter-ano', getUnique('ano'));
             
-            const calendarMonths = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
             const rawMonths = getUnique('mes');
-            const sortedMonths = calendarMonths.filter(m => rawMonths.includes(m)).concat(rawMonths.filter(m => !calendarMonths.includes(m)));
+            const sortedMonths = CALENDAR_MONTHS.filter(m => rawMonths.includes(m)).concat(rawMonths.filter(m => !CALENDAR_MONTHS.includes(m)));
             fillSelect('filter-mes', sortedMonths);
 
             fillSelect('filter-week', getUnique('week'));
@@ -621,6 +678,42 @@
             fillSelect('filter-medio', getUnique('medio'));
             fillSelect('filter-motivo', getUnique('motivo'));
             fillSelect('filter-marcas', ["Allianz Colombia", "Fundación Allianz"]);
+        }
+
+        function populateComparatorSelects() {
+            const weeks = [...new Set(rawData.map(d => d.week).filter(Boolean))];
+            const selWA = document.getElementById('compare-week-a');
+            const selWB = document.getElementById('compare-week-b');
+            if (selWA && selWB) {
+                selWA.innerHTML = ''; selWB.innerHTML = '';
+                weeks.forEach(w => {
+                    selWA.appendChild(new Option(w, w));
+                    selWB.appendChild(new Option(w, w));
+                });
+                if (weeks.length >= 2) {
+                    selWA.value = weeks[weeks.length - 2];
+                    selWB.value = weeks[weeks.length - 1];
+                }
+            }
+
+            const rawMonths = [...new Set(rawData.map(d => d.mes).filter(Boolean))];
+            const sortedMonths = CALENDAR_MONTHS.filter(m => rawMonths.includes(m)).concat(rawMonths.filter(m => !CALENDAR_MONTHS.includes(m)));
+            const selMCurr = document.getElementById('compare-month-current');
+            const selMPrev = document.getElementById('compare-month-prev');
+            if (selMCurr && selMPrev) {
+                selMCurr.innerHTML = ''; selMPrev.innerHTML = '';
+                sortedMonths.forEach(m => {
+                    selMCurr.appendChild(new Option(m, m));
+                    selMPrev.appendChild(new Option(m, m));
+                });
+                if (sortedMonths.length >= 2) {
+                    selMCurr.value = sortedMonths[sortedMonths.length - 1];
+                    selMPrev.value = sortedMonths[sortedMonths.length - 2];
+                } else if (sortedMonths.length === 1) {
+                    selMCurr.value = sortedMonths[0];
+                    selMPrev.value = sortedMonths[0];
+                }
+            }
         }
 
         function fillSelect(id, values) {
@@ -680,6 +773,30 @@
             renderDashboard();
         }
 
+        function setSummaryMode(mode) {
+            currentSummaryMode = mode;
+            const btnDay = document.getElementById('tab-summary-day');
+            const btnWeek = document.getElementById('tab-summary-week');
+            const btnMonth = document.getElementById('tab-summary-month');
+            const weekControls = document.getElementById('weekly-comparator-controls');
+            const monthControls = document.getElementById('monthly-comparator-controls');
+
+            [btnDay, btnWeek, btnMonth].forEach(b => b.className = "px-3 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white");
+            weekControls.classList.add('hidden');
+            monthControls.classList.add('hidden');
+
+            if (mode === 'day') {
+                btnDay.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+            } else if (mode === 'week') {
+                btnWeek.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+                weekControls.classList.remove('hidden');
+            } else if (mode === 'month') {
+                btnMonth.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+                monthControls.classList.remove('hidden');
+            }
+            renderExecutiveSummary();
+        }
+
         function resetFilters() {
             document.getElementById('filter-ano').value = 'ALL';
             document.getElementById('filter-mes').value = 'ALL';
@@ -703,6 +820,7 @@
             updateKPIs(data);
             updateTimelineChart(data);
             updateBreakdownCharts(data);
+            renderExecutiveSummary();
             renderTable();
         }
 
@@ -761,6 +879,454 @@
             document.getElementById('kpi-sent-neg-val').textContent = `${negCount.toLocaleString()} (${negPct}%)`;
 
             lucide.createIcons();
+        }
+
+        function renderExecutiveSummary() {
+            if (currentSummaryMode === 'day') {
+                const data = getFilteredData();
+                updateDailySummaryHtml(data);
+            } else if (currentSummaryMode === 'week') {
+                updateWeeklyComparativeSummaryHtml();
+            } else if (currentSummaryMode === 'month') {
+                updateMonthlySummaryHtml();
+            }
+        }
+
+        function updateDailySummaryHtml(data) {
+            const container = document.getElementById('executive-summary-content');
+            const total = data.length;
+
+            if (total === 0) {
+                container.innerHTML = `<p class="text-slate-400 italic">No hay registros con los filtros seleccionados para generar el resumen diario.</p>`;
+                return;
+            }
+
+            const diaFiltro = document.getElementById('filter-dia').value;
+            let fechaTexto = "el periodo seleccionado";
+            if (diaFiltro) {
+                const parts = diaFiltro.split('-');
+                if (parts.length === 3) {
+                    const mesesNom = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+                    const mIdx = parseInt(parts[1], 10) - 1;
+                    fechaTexto = `El ${parseInt(parts[2], 10)} de ${mesesNom[mIdx] || 'agosto'} de ${parts[0]}`;
+                }
+            } else {
+                const firstDate = data[0].fechaSol;
+                if (firstDate && firstDate.includes('-')) {
+                    const parts = firstDate.split('-');
+                    const mesesNom = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+                    const mIdx = parseInt(parts[1], 10) - 1;
+                    fechaTexto = `El ${parseInt(parts[2], 10)} de ${mesesNom[mIdx] || 'agosto'} de ${parts[0]}`;
+                }
+            }
+
+            const posCount = data.filter(d => d.experiencia === "Positiva").length;
+            const neuCount = data.filter(d => d.experiencia === "Neutra").length;
+            const negCount = data.filter(d => d.experiencia === "Negativa").length;
+
+            const posPct = ((posCount / total) * 100).toFixed(1);
+            const neuPct = ((neuCount / total) * 100).toFixed(1);
+            const negPct = ((negCount / total) * 100).toFixed(1);
+
+            const canalCounts = {};
+            data.forEach(d => {
+                const c = d.canal || 'Otros';
+                canalCounts[c] = (canalCounts[c] || 0) + 1;
+            });
+            const canalList = Object.entries(canalCounts).sort((a, b) => b[1] - a[1]);
+            const topCanalName = canalList[0] ? canalList[0][0] : 'Instagram';
+            const topCanalPct = canalList[0] ? ((canalList[0][1] / total) * 100).toFixed(1) : '0';
+            const topCanalCount = canalList[0] ? canalList[0][1] : 0;
+            const canalBreakdownStr = canalList.map(c => `${c[0]} con el ${((c[1]/total)*100).toFixed(1)}% (${c[1]} interacción${c[1] > 1 ? 'es' : ''})`).join(', ');
+
+            const medioCounts = {};
+            data.forEach(d => {
+                const m = d.medio || 'Otros';
+                medioCounts[m] = (medioCounts[m] || 0) + 1;
+            });
+            const medioList = Object.entries(medioCounts).sort((a, b) => b[1] - a[1]);
+            const medioBreakdownStr = medioList.map(m => `El ${((m[1]/total)*100).toFixed(1)}% (${m[1]}) mediante ${m[0]}`).join(', seguido de ');
+
+            const posData = data.filter(d => d.experiencia === "Positiva");
+            const posMotivoCounts = {};
+            posData.forEach(d => {
+                const mot = d.motivo || 'Felicitación';
+                posMotivoCounts[mot] = (posMotivoCounts[mot] || 0) + 1;
+            });
+            const posMotivoList = Object.entries(posMotivoCounts).sort((a, b) => b[1] - a[1]);
+            let posMotivoText = "No se registraron motivos positivos destacados.";
+            if (posMotivoList.length > 0 && posCount > 0) {
+                const topPosMot = posMotivoList[0];
+                const topPosPct = ((topPosMot[1] / posCount) * 100).toFixed(1);
+                posMotivoText = `El motivo principal de interacción positiva fue categorizado como <strong>${topPosMot[0]}</strong>, representando el ${topPosPct}% de los casos positivos (${topPosMot[1]} de ${posCount})`;
+                if (posMotivoList.length > 1) {
+                    const secPosMot = posMotivoList[1];
+                    const secPosPct = ((secPosMot[1] / posCount) * 100).toFixed(1);
+                    posMotivoText += `, complementado por <strong>${secPosMot[0]}</strong> con el ${secPosPct}% (${secPosMot[1]} de ${posCount}).`;
+                } else {
+                    posMotivoText += `.`;
+                }
+            }
+
+            const negData = data.filter(d => d.experiencia === "Negativa");
+            const negMotivoCounts = {};
+            negData.forEach(d => {
+                const mot = d.motivo || 'Queja General';
+                negMotivoCounts[mot] = (negMotivoCounts[mot] || 0) + 1;
+            });
+            const negMotivoList = Object.entries(negMotivoCounts).sort((a, b) => b[1] - a[1]);
+            const negMotivoBreakdownStr = negMotivoList.map(n => `${n[0]} (${n[1]})`).join(', ') || 'Sin fricciones registradas';
+
+            const escaladosData = data.filter(d => {
+                const esc = (d.escalado || '').toString().toLowerCase().trim();
+                return esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
+            });
+            const totalEscalados = escaladosData.length;
+            const escaladosMotivoCounts = {};
+            escaladosData.forEach(d => {
+                const mot = d.motivo || d.statusEscalado || 'Relacionados con seguros';
+                escaladosMotivoCounts[mot] = (escaladosMotivoCounts[mot] || 0) + 1;
+            });
+            const escaladosList = Object.entries(escaladosMotivoCounts).sort((a, b) => b[1] - a[1]);
+            let escaladosBreakdownHtml = '';
+            if (escaladosList.length > 0) {
+                escaladosBreakdownHtml = escaladosList.map(e => `<li>• ${e[1]} ${e[0]}.</li>`).join('');
+            } else {
+                escaladosBreakdownHtml = `<li>• 0 casos escalados en el periodo.</li>`;
+            }
+
+            const summaryHtml = `
+                <p class="font-bold text-slate-100">Hola equipo, comparto el cierre del día.</p>
+                <p>${fechaTexto}, la operación registró un total de <strong>${total} interacciones (Inflow)</strong> distribuidas en los canales. Durante este día, la percepción del cliente registró un <strong>${posPct}% de satisfacción positiva (${posCount} casos)</strong>, un <strong>${neuPct}% de postura neutra (${neuCount} casos)</strong>, mientras que el <strong>${negPct}% restante correspondió a una experiencia negativa (${negCount} casos)</strong>. ${canalList.map(c => c[0]).join(', ')} se consolidaron como los canales de atención, con un comportamiento orientado principalmente hacia ${medioList.map(m => m[0].toLowerCase()).join(', ')}.</p>
+                
+                <div class="pt-2">
+                    <p class="font-extrabold text-cyan-400 tracking-wide uppercase text-[11px] mb-1">Key Insights</p>
+                    <ul class="space-y-1.5 pl-1">
+                        <li><strong>Dominio de ${topCanalName}:</strong> ${topCanalName} lideró la conversación concentrando el ${topCanalPct}% del tráfico total (${topCanalCount} interacciones), seguido por ${canalBreakdownStr}.</li>
+                        <li><strong>Referencia por tipo de contacto:</strong> ${medioBreakdownStr}.</li>
+                        <li><strong>Predominio de experiencias destacadas:</strong> ${posMotivoText}</li>
+                        <li><strong>Nivel de fricción:</strong> Se registraron ${negCount} casos de Experiencia Negativa en el día (${negPct}% del Inflow), distribuidos en ${negMotivoBreakdownStr}.</li>
+                    </ul>
+                </div>
+
+                <div class="pt-2">
+                    <p class="font-extrabold text-cyan-400 tracking-wide uppercase text-[11px] mb-1">Social Media Management & Follow-ups</p>
+                    <p>Todos los chats fueron revisados y cuentan con el manejo correspondiente.</p>
+                    <p class="mt-1">Actualmente contamos con <strong>${totalEscalados} casos escalados:</strong></p>
+                    <ul class="pl-1 space-y-0.5 mt-0.5">
+                        ${escaladosBreakdownHtml}
+                    </ul>
+                    <p class="mt-2 text-emerald-400 font-semibold">Las redes quedaron al día sin interacciones pendientes por contestar o revisar.</p>
+                </div>
+            `;
+
+            container.innerHTML = summaryHtml;
+        }
+
+        function updateWeeklyComparativeSummaryHtml() {
+            const container = document.getElementById('executive-summary-content');
+            const weekA = document.getElementById('compare-week-a').value;
+            const weekB = document.getElementById('compare-week-b').value;
+
+            if (!weekA || !weekB) {
+                container.innerHTML = `<p class="text-slate-400 italic">Por favor selecciona dos semanas válidas para realizar la comparación.</p>`;
+                return;
+            }
+
+            const dataA = rawData.filter(d => d.week === weekA);
+            const dataB = rawData.filter(d => d.week === weekB);
+
+            const totalA = dataA.length;
+            const totalB = dataB.length;
+            const totalPeriodo = totalA + totalB;
+
+            if (totalPeriodo === 0) {
+                container.innerHTML = `<p class="text-slate-400 italic">No se encontraron registros para las semanas seleccionadas (${weekA} y ${weekB}).</p>`;
+                return;
+            }
+
+            const diff = totalB - totalA;
+            const pctCrecimiento = totalA > 0 ? ((diff / totalA) * 100).toFixed(1) : 100;
+            const tendenciaTexto = diff >= 0 ? `una tendencia al alza (+${pctCrecimiento}%)` : `una disminución (${pctCrecimiento}%)`;
+            const pctPartB = totalPeriodo > 0 ? ((totalB / totalPeriodo) * 100).toFixed(1) : 0;
+
+            const getChannelCounts = dSet => {
+                const res = {};
+                dSet.forEach(d => { res[d.canal || 'Otros'] = (res[d.canal || 'Otros'] || 0) + 1; });
+                return res;
+            };
+            const cA = getChannelCounts(dataA);
+            const cB = getChannelCounts(dataB);
+            const allChannels = [...new Set([...Object.keys(cA), ...Object.keys(cB)])];
+            
+            const channelTotals = allChannels.map(c => ({
+                canal: c,
+                total: (cA[c] || 0) + (cB[c] || 0),
+                countA: cA[c] || 0,
+                countB: cB[c] || 0
+            })).sort((a, b) => b.total - a.total);
+
+            const topCanal1 = channelTotals[0] || { canal: 'LinkedIn', total: 0, countA: 0, countB: 0 };
+            const topCanal1Pct = totalPeriodo > 0 ? ((topCanal1.total / totalPeriodo) * 100).toFixed(1) : 0;
+            const topCanal2 = channelTotals[1] || { canal: 'Instagram', total: 0, countA: 0, countB: 0 };
+            const topCanal2Pct = totalPeriodo > 0 ? ((topCanal2.total / totalPeriodo) * 100).toFixed(1) : 0;
+            const topCanal2PctB = totalB > 0 ? ((topCanal2.countB / totalB) * 100).toFixed(1) : 0;
+
+            const getPositiveMotivos = dSet => dSet.filter(d => d.experiencia === "Positiva" || (d.motivo && (d.motivo.toLowerCase().includes('felic') || d.motivo.toLowerCase().includes('destac')))).length;
+            const posA = getPositiveMotivos(dataA);
+            const posB = getPositiveMotivos(dataB);
+            const posPctA = totalA > 0 ? ((posA / totalA) * 100).toFixed(1) : 0;
+            const posPctB = totalB > 0 ? ((posB / totalB) * 100).toFixed(1) : 0;
+
+            const posGenA = dataA.filter(d => d.experiencia === "Positiva").length;
+            const posGenB = dataB.filter(d => d.experiencia === "Positiva").length;
+            const posGenPctA = totalA > 0 ? ((posGenA / totalA) * 100).toFixed(1) : 0;
+            const posGenPctB = totalB > 0 ? ((posGenB / totalB) * 100).toFixed(1) : 0;
+
+            const negGenA = dataA.filter(d => d.experiencia === "Negativa").length;
+            const negGenB = dataB.filter(d => d.experiencia === "Negativa").length;
+            const negGenPctA = totalA > 0 ? ((negGenA / totalA) * 100).toFixed(1) : 0;
+            const negGenPctB = totalB > 0 ? ((negGenB / totalB) * 100).toFixed(1) : 0;
+
+            const escaladosB = dataB.filter(d => {
+                const esc = (d.escalado || '').toString().toLowerCase().trim();
+                return esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
+            });
+            const totalEscaladosB = escaladosB.length;
+            const escaladosBMotivoCounts = {};
+            escaladosB.forEach(d => {
+                const mot = d.motivo || d.statusEscalado || 'Relacionados con seguros';
+                escaladosBMotivoCounts[mot] = (escaladosBMotivoCounts[mot] || 0) + 1;
+            });
+            const escaladosBList = Object.entries(escaladosBMotivoCounts).sort((a, b) => b[1] - a[1]);
+            let escaladosBHtml = '';
+            if (escaladosBList.length > 0) {
+                escaladosBHtml = escaladosBList.map(e => `<li>• ${e[1]} ${e[0]}.</li>`).join('');
+            } else {
+                escaladosBHtml = `<li>• Sin casos escalados en ${weekB}.</li>`;
+            }
+
+            const weeklyHtml = `
+                <p class="font-extrabold text-blue-400 uppercase tracking-wider text-sm mb-1">Overall Week</p>
+                <p>Durante el periodo evaluado (<strong>semanas ${weekA} y ${weekB}</strong>), las redes presentaron un volumen total de <strong>${totalPeriodo} interacciones</strong>. Se observa ${tendenciaTexto} en la semana ${weekB} (<strong>${totalB} casos</strong>, equivalente al <strong>${pctPartB}%</strong> del volumen total), registrando una variación de <strong>${pctCrecimiento >= 0 ? '+' + pctCrecimiento : pctCrecimiento}%</strong> en el inflow en comparación con la semana ${weekA} (<strong>${totalA} casos</strong>). Este comportamiento estuvo impulsado principalmente por la dinamización de interacciones orgánicas y menciones destacadas.</p>
+                
+                <div class="pt-2">
+                    <p class="font-extrabold text-cyan-400 tracking-wide uppercase text-[11px] mb-1">Hallazgos principales</p>
+                    <ul class="space-y-1.5 pl-1">
+                        <li><strong>Evolución de Volumetría de Entrada (Inflow o interacciones):</strong> Evolución de ${totalA} a ${totalB} interacciones (${pctCrecimiento >= 0 ? '+' + pctCrecimiento : pctCrecimiento}%) entre ${weekA} y ${weekB}.</li>
+                        <li><strong>Dominancia de Canales:</strong> <strong>${topCanal1.canal}</strong> se consolida como canal prioritario con un <strong>${topCanal1Pct}% acumulado</strong> (${topCanal1.countA} casos en ${weekA} y ${topCanal1.countB} en ${weekB}), seguido por <strong>${topCanal2.canal} con el ${topCanal2Pct}% acumulado</strong> (${topCanal2.countB} casos en ${weekB}; ${topCanal2PctB}% de participación semanal).</li>
+                        <li><strong>Pico de Interacciones por Motivo:</strong> Las interacciones vinculadas a felicitaciones y experiencias destacadas sumaron ${posA} casos en ${weekA} (${posPctA}%) y alcanzaron ${posB} casos en ${weekB} (${posPctB}%).</li>
+                        <li><strong>Sentimiento y Experiencia:</strong> La percepción positiva pasó del <strong>${posGenPctA}%</strong> (${posGenA} casos) en ${weekA} al <strong>${posGenPctB}%</strong> (${posGenB} casos) en ${weekB}. La negatividad/insatisfacción registró una tasa del <strong>${negGenPctB}%</strong> (${negGenB} casos en ${weekB}) frente al <strong>${negGenPctA}%</strong> (${negGenA} casos en ${weekA}).</li>
+                    </ul>
+                </div>
+
+                <div class="pt-2">
+                    <p class="font-extrabold text-cyan-400 tracking-wide uppercase text-[11px] mb-1">Impacto en experiencia del cliente</p>
+                    <ul class="space-y-1.5 pl-1">
+                        <li><strong>Fortalecimiento del Engagement y Reputación:</strong> La concentración de interacciones positivas y resoluciones efectivas en ${topCanal1.canal} e ${topCanal2.canal} fortaleció el posicionamiento y la confianza de marca respecto a asesores y productos.</li>
+                        <li><strong>Reducción Efectiva de Inconformidades:</strong> El control y seguimiento de quejas operativas y demoras de atención disminuyó los riesgos de fricción, optimizando el índice de satisfacción general en la última semana evaluada.</li>
+                    </ul>
+                </div>
+
+                <div class="pt-2">
+                    <p class="font-extrabold text-cyan-400 tracking-wide uppercase text-[11px] mb-1">Social Media Management & Follow-ups</p>
+                    <p>Actualmente contamos con <strong>${totalEscaladosB} casos escalados</strong> en ${weekB} con el debido seguimiento del equipo:</p>
+                    <ul class="pl-1 space-y-0.5 mt-0.5">
+                        ${escaladosBHtml}
+                    </ul>
+                    <p class="mt-2 text-emerald-400 font-semibold">Todas las interacciones de los canales cuentan con respuesta y manejo al día.</p>
+                </div>
+            `;
+
+            container.innerHTML = weeklyHtml;
+        }
+
+        function updateMonthlySummaryHtml() {
+            const container = document.getElementById('executive-summary-content');
+            const mesCurr = document.getElementById('compare-month-current').value;
+            const mesPrev = document.getElementById('compare-month-prev').value;
+
+            if (!mesCurr) {
+                container.innerHTML = `<p class="text-slate-400 italic">Por favor selecciona un mes válido para el análisis.</p>`;
+                return;
+            }
+
+            const dataCurr = rawData.filter(d => d.mes === mesCurr);
+            const dataPrev = mesPrev && mesPrev !== mesCurr ? rawData.filter(d => d.mes === mesPrev) : [];
+
+            const totalCurr = dataCurr.length;
+            const totalPrev = dataPrev.length;
+
+            if (totalCurr === 0) {
+                container.innerHTML = `<p class="text-slate-400 italic">No se encontraron registros para el mes de ${mesCurr}.</p>`;
+                return;
+            }
+
+            const diffTotal = totalCurr - totalPrev;
+            const diffTotalStr = totalPrev > 0 ? (diffTotal >= 0 ? `+${diffTotal}` : `${diffTotal}`) : `+${totalCurr}`;
+
+            const getCounts = (dSet, key) => {
+                const res = {};
+                dSet.forEach(d => { const k = d[key] || 'Otros'; res[k] = (res[k] || 0) + 1; });
+                return res;
+            };
+
+            const chCurr = getCounts(dataCurr, 'canal');
+            const chPrev = getCounts(dataPrev, 'canal');
+            const allChList = Object.entries(chCurr).sort((a, b) => b[1] - a[1]);
+            
+            const topCanales = [];
+            const lowCanales = [];
+
+            allChList.forEach(([cName, cCount]) => {
+                const pCount = chPrev[cName] || 0;
+                const dCount = cCount - pCount;
+                const dStr = totalPrev > 0 ? (dCount >= 0 ? `(+${dCount} vs ${mesPrev.toLowerCase()})` : `(${dCount} vs ${mesPrev.toLowerCase()})`) : '';
+                if (cCount >= totalCurr * 0.15) {
+                    topCanales.push(`${cName} con ${cCount} chats ${dStr}`);
+                } else {
+                    lowCanales.push(`${cName}: ${cCount} chats ${dStr}`);
+                }
+            });
+
+            const evCurr = getCounts(dataCurr, 'eventos');
+            const sinEventoCount = evCurr['Sin Evento'] || evCurr['sin evento'] || evCurr[''] || evCurr['Sin evento activo'] || 0;
+            const evSorted = Object.entries(evCurr).filter(([k]) => k && !k.toLowerCase().includes('sin evento') && k.trim() !== '').sort((a,b) => b[1] - a[1]);
+            
+            let mainEvHtml = '';
+            if (evSorted.length > 0) {
+                const [evName, evCount] = evSorted[0];
+                const evData = dataCurr.filter(d => (d.eventos || '').toLowerCase() === evName.toLowerCase());
+                const evMotivos = Object.entries(getCounts(evData, 'motivo')).slice(0, 3).map(m => `• ${m[0]}`).join('<br>');
+                const evCanalTop = Object.entries(getCounts(evData, 'canal')).sort((a,b) => b[1] - a[1])[0] || ['Instagram', 0];
+                
+                mainEvHtml = `
+                    <p class="mt-1"><strong>-${evName}</strong> registra <strong>${evCount} interacciones</strong>, donde los principales motivos fueron:<br>${evMotivos}</p>
+                    <p class="mt-1"><strong>${evCanalTop[0]}</strong> fue el canal con mayor participación para este evento.</p>
+                `;
+            }
+
+            const otherEventsList = evSorted.slice(1, 6).map(e => `• ${e[0]} (${e[1]})`).join('<br>');
+
+            const medCurr = getCounts(dataCurr, 'medio');
+            const medPrev = getCounts(dataPrev, 'medio');
+            const medList = Object.entries(medCurr).sort((a,b) => b[1] - a[1]);
+            const medStr = medList.map(([mName, mCount]) => {
+                const pC = medPrev[mName] || 0;
+                const dC = mCount - pC;
+                const dStr = totalPrev > 0 ? (dC >= 0 ? ` (+${dC} vs ${mesPrev.toLowerCase()})` : ` (${dC} vs ${mesPrev.toLowerCase()})`) : '';
+                return `${mName}: ${mCount} interacciones${dStr}`;
+            }).join('<br>');
+
+            const medImpacts = medList.map(([mName]) => {
+                const mData = dataCurr.filter(d => d.medio === mName);
+                const topMot = Object.entries(getCounts(mData, 'motivo')).sort((a,b) => b[1] - a[1])[0];
+                return `<strong>${mName}:</strong> ${topMot ? topMot[0] : 'Consultas generales'}`;
+            }).join('<br>');
+
+            const noEsQuejaCount = dataCurr.filter(d => (d.statusEscalado || '').toLowerCase().includes('no es una queja') || (d.statusEscalado || '').toLowerCase().includes('no aplica')).length;
+            const cerradosCount = dataCurr.filter(d => (d.statusEscalado || '').toLowerCase().includes('cerrado') || (d.statusEscalado || '').toLowerCase().includes('resuelto')).length;
+            const abiertosCount = dataCurr.filter(d => (d.statusEscalado || '').toLowerCase().includes('abierto') || (d.statusEscalado || '').toLowerCase().includes('proceso')).length;
+
+            const quejasData = dataCurr.filter(d => d.experiencia === "Negativa" || (d.escalado || '').toLowerCase() === 'sí' || (d.escalado || '').toLowerCase() === 'si');
+            const topQuejasMotivos = Object.entries(getCounts(quejasData, 'motivo')).slice(0, 3).map(m => `• ${m[0]} (${m[1]})`).join('<br>');
+
+            const top5Motivos = Object.entries(getCounts(dataCurr, 'motivo')).sort((a,b) => b[1] - a[1]).slice(0, 5);
+            const top5MotivosHtml = top5Motivos.map(m => `• <strong>${m[0]}:</strong> ${m[1]} interacciones`).join('<br>');
+
+            const fraudeCurr = dataCurr.filter(d => (d.motivo || '').toLowerCase().includes('fraude') || (d.comentario || '').toLowerCase().includes('fraude') || (d.comentario || '').toLowerCase().includes('estafa')).length;
+            const fraudePrev = dataPrev.filter(d => (d.motivo || '').toLowerCase().includes('fraude') || (d.comentario || '').toLowerCase().includes('fraude') || (d.comentario || '').toLowerCase().includes('estafa')).length;
+            const diffFraude = fraudeCurr - fraudePrev;
+            const diffFraudeStr = totalPrev > 0 ? (diffFraude <= 0 ? `a diferencia de ${mesPrev.toLowerCase()} bajamos ${Math.abs(diffFraude)} interacciones negativas` : `aumentaron ${diffFraude} casos vs ${mesPrev.toLowerCase()}`) : '';
+
+            const posC = dataCurr.filter(d => d.experiencia === "Positiva").length;
+            const neuC = dataCurr.filter(d => d.experiencia === "Neutra").length;
+            const negC = dataCurr.filter(d => d.experiencia === "Negativa").length;
+
+            const posP = dataPrev.filter(d => d.experiencia === "Positiva").length;
+            const neuP = dataPrev.filter(d => d.experiencia === "Neutra").length;
+            const negP = dataPrev.filter(d => d.experiencia === "Negativa").length;
+
+            const diffPos = posC - posP;
+            const diffNeu = neuC - neuP;
+            const diffNeg = negC - negP;
+
+            const compSentHtml = totalPrev > 0 ? `
+                <div class="mt-2 text-slate-300">
+                    <p class="font-bold text-slate-200">Comparado con ${mesPrev.toLowerCase()}:</p>
+                    <p>• Negativas: ${diffNeg >= 0 ? '+' + diffNeg : diffNeg} vs ${mesPrev.toLowerCase()}</p>
+                    <p>• Neutras: ${diffNeu >= 0 ? '+' + diffNeu : diffNeu} interacciones</p>
+                    <p>• Positivas: ${diffPos >= 0 ? '+' + diffPos : diffPos} interacciones</p>
+                </div>
+            ` : '';
+
+            const monthlyHtml = `
+                <div>
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-sm">Cierre RRSS Canal y mes:</p>
+                    <p class="mt-1"><strong>${mesCurr}</strong> cierra con <strong>${totalCurr} interacciones</strong>. Los canales que presentaron un aumento y mayor volumen son ${topCanales.join(' y ')}.</p>
+                    ${lowCanales.length > 0 ? `<p class="mt-2 font-semibold text-slate-300">Los canales con un menor volumen en inflow son:</p><p>${lowCanales.join('<br>')}</p>` : ''}
+                    <p class="mt-2 text-blue-300">El balance general de redes presenta una variación de <strong>${diffTotalStr} interacciones</strong>${totalPrev > 0 ? ' vs ' + mesPrev.toLowerCase() : ''}.</p>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-xs">Tops eventos por marcas y plataformas:</p>
+                    <p class="mt-1">"Allianz destaca como marca principal donde tenemos lo siguiente según eventos: El escenario <strong>“sin evento activo”</strong> cierra con <strong>${sinEventoCount} interacciones</strong>.</p>
+                    ${mainEvHtml}
+                    ${otherEventsList ? `<p class="mt-2 font-semibold text-slate-300">Otros eventos registrados:</p><p>${otherEventsList}</p>` : ''}
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-xs">Solicitudes por medio de contacto:</p>
+                    <p class="mt-1 font-semibold text-slate-300">Las solicitudes por medio de contacto cierran así:</p>
+                    <p class="mt-0.5">${medStr}</p>
+                    <p class="mt-2 font-semibold text-slate-300">Principales impactos por medio:</p>
+                    <p class="mt-0.5">${medImpacts}</p>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-xs">Status casos Escalados PQRs:</p>
+                    <p class="mt-1">Para el cierre de ${mesCurr.toLowerCase()} tenemos:</p>
+                    <p>• <strong>${noEsQuejaCount} chats</strong> corresponden a “No es una queja”.</p>
+                    <p>• <strong>${cerradosCount} casos</strong> en estado cerrado / resuelto.</p>
+                    ${abiertosCount > 0 ? `<p>• <strong>${abiertosCount} casos</strong> en proceso o abiertos.</p>` : ''}
+                    ${topQuejasMotivos ? `<p class="mt-2 font-semibold text-slate-300">Los casos más relevantes y focos de atención fueron sobre:</p><p class="mt-0.5">${topQuejasMotivos}</p>` : ''}
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-xs">Top 5 Motivos de Contacto:</p>
+                    <p class="mt-1">${top5MotivosHtml}</p>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-xs">Reportes de Fraude o Seguridad:</p>
+                    <p class="mt-1">Para el mes de ${mesCurr.toLowerCase()} cerramos con <strong>${fraudeCurr} caso(s)</strong> bajo la categoría de "Reporte de fraude o posible estafa"${diffFraudeStr ? ' (' + diffFraudeStr + ')' : ''}. Se brindó el acompañamiento y direccionamiento de acuerdo a los protocolos de seguridad establecidos.</p>
+                </div>
+
+                <div class="pt-3 border-t border-slate-800">
+                    <p class="font-extrabold text-cyan-400 uppercase tracking-wider text-xs">Sentimiento & Experiencia del Cliente:</p>
+                    <p class="mt-1 font-semibold text-slate-300">La experiencia en ${mesCurr} cierra así:</p>
+                    <p>• <span class="text-rose-400 font-bold">Negativa:</span> ${negC} interacciones (${((negC/totalCurr)*100).toFixed(1)}%)</p>
+                    <p>• <span class="text-slate-300 font-bold">Neutra:</span> ${neuC} interacciones (${((neuC/totalCurr)*100).toFixed(1)}%)</p>
+                    <p>• <span class="text-emerald-400 font-bold">Positiva:</span> ${posC} interacciones (${((posC/totalCurr)*100).toFixed(1)}%)</p>
+                    ${compSentHtml}
+                </div>
+            `;
+
+            container.innerHTML = monthlyHtml;
+        }
+
+        function copySummaryText() {
+            const container = document.getElementById('executive-summary-content');
+            const textToCopy = container.innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> ¡Copiado con Éxito!`;
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i> Copiar Texto`;
+                    lucide.createIcons();
+                }, 2500);
+            });
         }
 
         function updateTimelineChart(data) {
