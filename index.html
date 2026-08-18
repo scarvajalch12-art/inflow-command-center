@@ -332,7 +332,7 @@
                             <th class="py-3 px-3">Enlace</th>
                         </tr>
                     </thead>
-                    <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium">
+                    <tbody id="table-body" class="divide-y border-slate-800/60 font-medium">
                     </tbody>
                 </table>
             </div>
@@ -375,8 +375,12 @@
         </div>
     </div>
 
-    <!-- Script Logic con JSONP GViz (Sin CORS, Sin Proxy, 100% Nativo de Google) -->
+    <!-- Script Logic -->
     <script>
+        // Set Chart.js global defaults for maximum legibility on dark theme
+        Chart.defaults.color = '#ffffff';
+        Chart.defaults.font.family = "'Plus Jakarta Sans', sans-serif";
+
         let rawData = [];
         let currentTimeView = 'day';
         let currentPage = 1;
@@ -485,7 +489,7 @@
                 script.src = gvizUrl;
                 script.onerror = function() {
                     if (syncIcon) syncIcon.classList.remove('animate-spin');
-                    document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Error de acceso (Revisar Permisos)`;
+                    document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Error de acceso`;
                 };
                 document.body.appendChild(script);
             }
@@ -812,8 +816,8 @@
                         tooltip: { backgroundColor: '#081226', titleColor: '#fff', bodyColor: '#93c5fd' }
                     },
                     scales: {
-                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+                        x: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: '600' } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#ffffff', stepSize: 1, font: { weight: '600' } } }
                     }
                 }
             });
@@ -885,9 +889,10 @@
                             display: type !== 'bar',
                             position: 'bottom',
                             labels: {
-                                color: '#cbd5e1',
-                                font: { size: 11 },
-                                boxWidth: 12,
+                                color: '#ffffff',
+                                font: { size: 12, weight: '700' },
+                                boxWidth: 14,
+                                padding: 16,
                                 generateLabels: function(chart) {
                                     const dataset = chart.data.datasets[0];
                                     return chart.data.labels.map((label, i) => {
@@ -896,6 +901,7 @@
                                         return {
                                             text: `${label}: ${val.toLocaleString()} (${pct}%)`,
                                             fillStyle: dataset.backgroundColor[i % dataset.backgroundColor.length],
+                                            fontColor: '#ffffff',
                                             hidden: isNaN(dataset.data[i]),
                                             index: i
                                         };
@@ -914,8 +920,8 @@
                         }
                     },
                     scales: type === 'bar' ? {
-                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-                        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                        x: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#ffffff', font: { size: 11, weight: '600' } } },
+                        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { size: 11, weight: '600' } } }
                     } : {}
                 }
             });
