@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Allianz Command Center | Executive Live Analytics</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- SheetJS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- PapaParse CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #060d1f; color: #f1f5f9; }
+        .glass-panel {
+            background: rgba(11, 22, 48, 0.88);
+            backdrop-filter: blur(14px);
+            border: 1px solid rgba(0, 112, 210, 0.2);
+        }
+        .allianz-gradient {
+            background: linear-gradient(135deg, #003780 0%, #0070d2 50%, #00a3e0 100%);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #060d1f; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col custom-scrollbar">
+
+    <!-- Header -->
+    <header class="border-b border-slate-800/90 bg-[#081226]/95 backdrop-blur sticky top-0 z-50 shadow-2xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl allianz-gradient flex items-center justify-center text-white shadow-lg shadow-blue-500/25 font-bold text-xl ring-2 ring-blue-400/30">
+                    <i data-lucide="shield"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold text-white tracking-tight flex items-center gap-2.5">
+                        Allianz Inflow Command Center <span id="connection-status" class="text-[10px] uppercase font-extrabold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs En Vivo</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Social Listening, Sentimiento, Escalados & Desglose por Marcas</p>
+                </div>
+            </div>
+
+            <!-- Global Action Bar -->
+            <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                <div class="bg-slate-900/90 border border-slate-700/80 p-1 rounded-xl flex items-center text-xs font-semibold">
+                    <button id="view-day-btn" onclick="setTimeView('day')" class="px-3.5 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow">Diario</button>
+                    <button id="view-week-btn" onclick="setTimeView('week')" class="px-3.5 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white">Semanal</button>
+                    <button id="view-month-btn" onclick="setTimeView('month')" class="px-3.5 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white">Mensual</button>
+                </div>
+
+                <!-- Sync Live Button -->
+                <button onclick="syncDataLive()" class="px-3.5 py-2 allianz-gradient hover:opacity-95 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition shadow-lg shadow-blue-600/30">
+                    <i data-lucide="refresh-cw" id="sync-icon" class="w-4 h-4"></i> Actualizar Sheets
+                </button>
+
+                <!-- Config Modal Button -->
+                <button onclick="document.getElementById('config-modal').classList.remove('hidden')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+                    <i data-lucide="link" class="w-4 h-4 text-cyan-400"></i> Enlace
+                </button>
+
+                <!-- Excel Upload fallback -->
+                <label class="cursor-pointer p-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition" title="Cargar archivo Excel .xlsx">
+                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+                    <input type="file" id="excel-file-input" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleExcelUpload(event)">
+                </label>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Multidimensional Filters Panel -->
+        <section class="glass-panel rounded-2xl p-5 shadow-2xl">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4 border-b border-slate-800/80 pb-3">
+                <div class="flex items-center gap-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i> Filtros de Segmentación Inteligente
+                </div>
+                <div class="flex items-center gap-3">
+                    <span id="filtered-records-counter" class="text-xs font-medium text-slate-400">Cargando registros...</span>
+                    <button onclick="resetFilters()" class="text-xs text-blue-400 hover:text-blue-300 font-semibold flex items-center gap-1">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Restablecer Filtros
+                    </button>
+                </div>
+            </div>
+
+            <!-- Row 1: Time Filters -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs mb-3">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Año</label>
+                    <select id="filter-ano" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todos los Años</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Mes</label>
+                    <select id="filter-mes" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todos los Meses</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Semana (Week)</label>
+                    <select id="filter-week" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todas las Semanas</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Fecha Específica (Día)</label>
+                    <input type="date" id="filter-dia" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-slate-200 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <!-- Row 2: Categorical Filters -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Canal</label>
+                    <select id="filter-canal" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todos los Canales</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Medio</label>
+                    <select id="filter-medio" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todos los Medios</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Motivo</label>
+                    <select id="filter-motivo" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todos los Motivos</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-slate-400 mb-1 font-semibold">Marca / Plataforma</label>
+                    <select id="filter-marcas" onchange="applyFilters()" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-blue-500">
+                        <option value="ALL">Todas las Marcas</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+        <!-- Executive KPI Cards Section (4 Main Cards) -->
+        <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            <!-- 1. Total Inflow & Response Rate -->
+            <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-blue-500/50 transition flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">TOTAL INFLOW</p>
+                        <h3 id="kpi-total-inflow" class="text-3xl font-black text-white mt-1">0</h3>
+                    </div>
+                    <div class="p-2.5 bg-blue-500/10 text-blue-400 rounded-xl">
+                        <i data-lucide="inbox" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-3 pt-2.5 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                    <span class="text-slate-400">Respuestas CM:</span>
+                    <span id="kpi-resp-rate" class="font-bold text-emerald-400">0 (0%)</span>
+                </div>
+            </div>
+
+            <!-- 2. Marcas Inflow (Allianz Colombia vs Fundación Allianz) -->
+            <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-cyan-500/50 transition flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">INFLOW POR MARCA</p>
+                        <div class="mt-1 flex items-baseline gap-2">
+                            <span id="kpi-marca-allianz" class="text-xl font-black text-blue-400">0</span>
+                            <span class="text-xs text-slate-500">vs</span>
+                            <span id="kpi-marca-fundacion" class="text-xl font-black text-cyan-300">0</span>
+                        </div>
+                    </div>
+                    <div class="p-2.5 bg-cyan-500/10 text-cyan-400 rounded-xl">
+                        <i data-lucide="building-2" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-400 space-y-0.5 border-t border-slate-800/80 pt-2">
+                    <div class="flex justify-between"><span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-500"></span> Allianz Col:</span><strong id="kpi-pct-allianz" class="text-slate-200">0 (0%)</strong></div>
+                    <div class="flex justify-between"><span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-400"></span> Fundación:</span><strong id="kpi-pct-fundacion" class="text-slate-200">0 (0%)</strong></div>
+                </div>
+            </div>
+
+            <!-- 3. Casos Escalados & Estatus Detallados -->
+            <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-amber-500/50 transition flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">CASOS ESCALADOS</p>
+                        <h3 id="kpi-escalados" class="text-3xl font-black text-amber-400 mt-1">0</h3>
+                    </div>
+                    <div class="p-2.5 bg-amber-500/10 text-amber-400 rounded-xl">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-400 space-y-0.5 border-t border-slate-800/80 pt-2" id="escalados-breakdown-list">
+                    <div class="flex justify-between"><span>Abiertos / En Proceso:</span><strong id="kpi-esc-abiertos" class="text-amber-300">0 (0%)</strong></div>
+                    <div class="flex justify-between"><span>Cerrados / Resueltos:</span><strong id="kpi-esc-cerrados" class="text-emerald-400">0 (0%)</strong></div>
+                </div>
+            </div>
+
+            <!-- 4. Experiencia / Sentimiento (Positivo, Neutro, Negativo) -->
+            <div class="glass-panel rounded-2xl p-4 relative overflow-hidden group hover:border-purple-500/50 transition flex flex-col justify-between">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-[11px] text-slate-400 font-bold uppercase tracking-wider">SENTIMIENTO / EXPERIENCIA</p>
+                        <h3 id="kpi-sentimiento-pos" class="text-3xl font-black text-emerald-400 mt-1">0%</h3>
+                    </div>
+                    <div class="p-2.5 bg-purple-500/10 text-purple-400 rounded-xl">
+                        <i data-lucide="smile" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="mt-2 text-[11px] text-slate-400 space-y-0.5 border-t border-slate-800/80 pt-2">
+                    <div class="flex justify-between"><span class="text-emerald-400">● Positivo:</span><strong id="kpi-sent-pos-val" class="text-emerald-300">0 (0%)</strong></div>
+                    <div class="flex justify-between"><span class="text-slate-400">● Neutro:</span><strong id="kpi-sent-neu-val" class="text-slate-200">0 (0%)</strong></div>
+                    <div class="flex justify-between"><span class="text-rose-400">● Negativo:</span><strong id="kpi-sent-neg-val" class="text-rose-300">0 (0%)</strong></div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Timeline Chart -->
+        <section class="glass-panel rounded-2xl p-5 shadow-2xl">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-4">
+                <div>
+                    <h2 id="timeline-title" class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-blue-400"></i> Tendencia de Inflow Total por Día
+                    </h2>
+                    <p class="text-xs text-slate-400">Comportamiento cronológico de solicitudes y escalados</p>
+                </div>
+                <div class="text-xs font-semibold text-slate-400 flex items-center gap-3">
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-blue-500 rounded-full inline-block"></span> Total Inflow</span>
+                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 bg-amber-500 rounded-full inline-block"></span> Escalados</span>
+                </div>
+            </div>
+            <div class="h-72 w-full">
+                <canvas id="timelineChart"></canvas>
+            </div>
+        </section>
+
+        <!-- 4 Visual Breakdowns: Canal, Medio, Motivo, Estatus Escalados -->
+        <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 1. Canal -->
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i data-lucide="radio" class="w-4 h-4 text-blue-400"></i> Inflow por Canal (Volumen & %)
+                    </h3>
+                    <span id="canal-total-badge" class="text-xs px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 font-semibold">0 canales</span>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="canalChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 2. Medio -->
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i data-lucide="message-circle" class="w-4 h-4 text-cyan-400"></i> Inflow por Medio (Historia, Comentario, Mensaje...)
+                    </h3>
+                    <span id="medio-total-badge" class="text-xs px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-400 font-semibold">0 medios</span>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="medioChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 3. Motivo Top -->
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i data-lucide="tag" class="w-4 h-4 text-purple-400"></i> Inflow por Motivo (Top Solicitudes)
+                    </h3>
+                    <span class="text-xs text-slate-400">Distribución</span>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="motivoChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 4. Estatus Casos Escalados Detailed Breakdown -->
+            <div class="glass-panel rounded-2xl p-5 shadow-2xl flex flex-col justify-between">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-2">
+                        <i data-lucide="list-checks" class="w-4 h-4 text-amber-400"></i> Estatus Casos Escalados (Cantidades & %)
+                    </h3>
+                    <span class="text-xs text-slate-400">Abierto, Cerrado, En Proceso...</span>
+                </div>
+                <div class="h-64 flex items-center justify-center">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Table -->
+        <section class="glass-panel rounded-2xl p-5 shadow-2xl space-y-4">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                <div>
+                    <h3 class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="table-2" class="w-4 h-4 text-blue-400"></i> Registro Completo de Solicitudes Allianz
+                    </h3>
+                    <p class="text-xs text-slate-400">Hoja: data_pqrs (Filtrado dinámico multidimensional)</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="text" id="search-input" onkeyup="renderTable()" placeholder="Buscar usuario, comentario, motivo, canal..." class="bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500 w-64">
+                </div>
+            </div>
+
+            <div class="overflow-x-auto custom-scrollbar border border-slate-800 rounded-xl">
+                <table class="w-full text-left text-xs text-slate-300">
+                    <thead class="bg-slate-900/95 text-slate-400 font-semibold border-b border-slate-800">
+                        <tr>
+                            <th class="py-3 px-3">Fecha Sol.</th>
+                            <th class="py-3 px-3">Mes</th>
+                            <th class="py-3 px-3">Semana</th>
+                            <th class="py-3 px-3">Canal</th>
+                            <th class="py-3 px-3">Medio</th>
+                            <th class="py-3 px-3">Motivo</th>
+                            <th class="py-3 px-3">Marca / Plataforma</th>
+                            <th class="py-3 px-3">Experiencia</th>
+                            <th class="py-3 px-3">Usuario</th>
+                            <th class="py-3 px-3 min-w-[220px]">Comentario</th>
+                            <th class="py-3 px-3 min-w-[220px]">Respuesta CM</th>
+                            <th class="py-3 px-3">Escalado</th>
+                            <th class="py-3 px-3">Status Escalado</th>
+                            <th class="py-3 px-3">Enlace</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-800/60 font-medium">
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex justify-between items-center text-xs text-slate-400 pt-2">
+                <span id="table-count-info">Mostrando 0 registros</span>
+                <div class="flex gap-2">
+                    <button id="prev-page-btn" onclick="changePage(-1)" class="px-3 py-1 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-40 font-semibold">Anterior</button>
+                    <button id="next-page-btn" onclick="changePage(1)" class="px-3 py-1 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-40 font-semibold">Siguiente</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal Connect Google Sheets -->
+    <div id="config-modal" class="hidden fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+        <div class="glass-panel bg-[#081226] rounded-2xl max-w-xl w-full p-6 space-y-4 border border-blue-500/30 shadow-2xl">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-blue-400"></i> Configurar Enlace de Google Sheets
+                </h3>
+                <button onclick="document.getElementById('config-modal').classList.add('hidden')" class="text-slate-400 hover:text-white text-lg">&times;</button>
+            </div>
+            
+            <div class="bg-blue-950/40 border border-blue-500/30 p-3.5 rounded-xl text-xs text-blue-200 space-y-1.5">
+                <p>Pega aquí el enlace de compartir de tu Google Sheet (<em>Compartir &gt; Copiar enlace</em>):</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-semibold text-slate-300 mb-1">Enlace de Google Sheets</label>
+                <input type="text" id="sheet-url-input" class="w-full bg-slate-950 border border-slate-700/80 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vRvMYDm9hO4V1wsvx5Fx4cT24a3QGE6HP-KCAfaudn3J8UFTJlzdCXJnCvaLtTnxI92V5LnN5fNqv2m/pub?gid=0&single=true&output=csv">
+            </div>
+            
+            <div class="flex justify-end gap-2.5">
+                <button onclick="document.getElementById('config-modal').classList.add('hidden')" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-700">Cancelar</button>
+                <button onclick="saveAndSyncSheetUrl()" class="px-5 py-2 allianz-gradient text-white rounded-xl text-xs font-bold hover:opacity-95 flex items-center gap-1.5">
+                    <i data-lucide="check" class="w-4 h-4"></i> Guardar y Conectar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        let rawData = [];
+        let currentTimeView = 'day';
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let charts = {};
+
+        const DEFAULT_SHEET_KEY = "ALLIANZ_GSHEET_SAVED_URL";
+        const DEFAULT_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvMYDm9hO4V1wsvx5Fx4cT24a3QGE6HP-KCAfaudn3J8UFTJlzdCXJnCvaLtTnxI92V5LnN5fNqv2m/pub?gid=0&single=true&output=csv";
+
+        const MONTH_MAP = {
+            "1": "Enero", "01": "Enero", "ene": "Enero", "enero": "Enero", "jan": "Enero",
+            "2": "Febrero", "02": "Febrero", "feb": "Febrero", "febrero": "Febrero",
+            "3": "Marzo", "03": "Marzo", "mar": "Marzo", "marzo": "Marzo",
+            "4": "Abril", "04": "Abril", "abr": "Abril", "abril": "Abril", "apr": "Abril",
+            "5": "Mayo", "05": "Mayo", "may": "Mayo", "mayo": "Mayo",
+            "6": "Junio", "06": "Junio", "jun": "Junio", "junio": "Junio",
+            "7": "Julio", "07": "Julio", "jul": "Julio", "julio": "Julio",
+            "8": "Agosto", "08": "Agosto", "ago": "Agosto", "agosto": "Agosto", "aug": "Agosto",
+            "9": "Septiembre", "09": "Septiembre", "sep": "Septiembre", "septiembre": "Septiembre", "sept": "Septiembre",
+            "10": "Octubre", "oct": "Octubre", "octubre": "Octubre",
+            "11": "Noviembre", "nov": "Noviembre", "noviembre": "Noviembre",
+            "12": "Diciembre", "dic": "Diciembre", "diciembre": "Diciembre", "dec": "Diciembre"
+        };
+
+        // Universal Date Normalizer (Converts any string/Date/timestamp to clean YYYY-MM-DD)
+        function normalizeDateToYYYYMMDD(val) {
+            if (!val) return '';
+            if (val instanceof Date) {
+                if (isNaN(val.getTime())) return '';
+                const y = val.getFullYear();
+                const m = String(val.getMonth() + 1).padStart(2, '0');
+                const d = String(val.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+            const str = String(val).trim();
+            
+            // Format from Google Viz API: Date(2026, 7, 18) -> Month is 0-indexed
+            const gvizDateMatch = str.match(/Date\((\d+),(\d+),(\d+)/);
+            if (gvizDateMatch) {
+                const y = gvizDateMatch[1];
+                const m = String(parseInt(gvizDateMatch[2]) + 1).padStart(2, '0');
+                const d = String(parseInt(gvizDateMatch[3])).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            // DD/MM/YYYY or D/M/YYYY or DD-MM-YYYY
+            const dmyMatch = str.match(/^(\d{1,2})[/\-](\d{1,2})[/\-](\d{4})/);
+            if (dmyMatch) {
+                const d = String(dmyMatch[1]).padStart(2, '0');
+                const m = String(dmyMatch[2]).padStart(2, '0');
+                const y = dmyMatch[3];
+                return `${y}-${m}-${d}`;
+            }
+
+            // YYYY-MM-DD or YYYY/MM/DD
+            const ymdMatch = str.match(/^(\d{4})[/\-](\d{1,2})[/\-](\d{1,2})/);
+            if (ymdMatch) {
+                const y = ymdMatch[1];
+                const m = String(ymdMatch[2]).padStart(2, '0');
+                const d = String(ymdMatch[3]).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            // Fallback Date object
+            const parsed = new Date(str);
+            if (!isNaN(parsed.getTime())) {
+                const y = parsed.getFullYear();
+                const m = String(parsed.getMonth() + 1).padStart(2, '0');
+                const d = String(parsed.getDate()).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            return str.split(' ')[0];
+        }
+
+        function normalizeMonth(rawMes, fechaSolStr) {
+            if (rawMes) {
+                const clean = String(rawMes).toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+                if (MONTH_MAP[clean]) return MONTH_MAP[clean];
+            }
+            if (fechaSolStr && fechaSolStr.includes('-')) {
+                const parts = fechaSolStr.split('-');
+                const monthNum = parts[1];
+                if (MONTH_MAP[monthNum]) return MONTH_MAP[monthNum];
+            }
+            return rawMes || 'Otros';
+        }
+
+        function initDashboard() {
+            lucide.createIcons();
+            const savedUrl = localStorage.getItem(DEFAULT_SHEET_KEY) || DEFAULT_URL;
+            document.getElementById('sheet-url-input').value = savedUrl;
+            syncDataLive(savedUrl);
+        }
+
+        function syncDataLive(customUrl) {
+            const url = customUrl || localStorage.getItem(DEFAULT_SHEET_KEY) || document.getElementById('sheet-url-input').value.trim() || DEFAULT_URL;
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.add('animate-spin');
+
+            const idMatch = url.match(/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+            if (idMatch && idMatch[1] && !url.includes('/d/e/2PACX-')) {
+                const sheetId = idMatch[1];
+                const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=responseHandler:handleGvizResponse&sheet=data_pqrs&tq=`;
+                
+                const oldScript = document.getElementById('gviz-jsonp-script');
+                if (oldScript) oldScript.remove();
+
+                const script = document.createElement('script');
+                script.id = 'gviz-jsonp-script';
+                script.src = gvizUrl;
+                script.onerror = function() {
+                    fallbackToProxyCsv(url);
+                };
+                document.body.appendChild(script);
+                return;
+            }
+
+            fallbackToProxyCsv(url);
+        }
+
+        function fallbackToProxyCsv(url) {
+            let csvUrl = url;
+            if (!csvUrl.includes('output=csv') && !csvUrl.includes('export?format=csv')) {
+                csvUrl = csvUrl.replace(/\/edit.*$/, '') + '/export?format=csv';
+            }
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(csvUrl);
+            
+            Papa.parse(proxyUrl, {
+                download: true,
+                header: true,
+                skipEmptyLines: 'greedy',
+                complete: function(res) {
+                    const syncIcon = document.getElementById('sync-icon');
+                    if (syncIcon) syncIcon.classList.remove('animate-spin');
+                    if (res.data && res.data.length > 0) {
+                        mapRawJsonToDashboard(res.data);
+                        document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${res.data.length} filas)`;
+                    }
+                },
+                error: function() {
+                    const syncIcon = document.getElementById('sync-icon');
+                    if (syncIcon) syncIcon.classList.remove('animate-spin');
+                }
+            });
+        }
+
+        window.handleGvizResponse = function(response) {
+            const syncIcon = document.getElementById('sync-icon');
+            if (syncIcon) syncIcon.classList.remove('animate-spin');
+
+            if (!response || !response.table) return;
+
+            const cols = response.table.cols.map(c => (c && c.label) ? c.label.trim() : '');
+            const rows = response.table.rows;
+
+            const jsonRows = [];
+            rows.forEach(r => {
+                const item = {};
+                r.c.forEach((cell, idx) => {
+                    const colName = cols[idx] || `Col_${idx}`;
+                    let val = '';
+                    if (cell && cell.f) val = cell.f;
+                    else if (cell && cell.v !== null && cell.v !== undefined) val = cell.v;
+                    item[colName] = val;
+                });
+                jsonRows.push(item);
+            });
+
+            if (jsonRows.length > 0) {
+                mapRawJsonToDashboard(jsonRows);
+                document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> data_pqrs (${jsonRows.length} filas)`;
+            }
+        };
+
+        function saveAndSyncSheetUrl() {
+            const url = document.getElementById('sheet-url-input').value.trim();
+            if (!url) return;
+            localStorage.setItem(DEFAULT_SHEET_KEY, url);
+            document.getElementById('config-modal').classList.add('hidden');
+            syncDataLive(url);
+        }
+
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                const sheetName = workbook.SheetNames.find(s => s.toLowerCase().includes('data_pqrs')) || workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonRows = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+                if (jsonRows.length > 0) {
+                    mapRawJsonToDashboard(jsonRows);
+                    document.getElementById('connection-status').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Archivo Local (${file.name})`;
+                    alert(`¡Archivo cargado con éxito! Se importaron ${jsonRows.length} registros.`);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function mapRawJsonToDashboard(rows) {
+            rawData = rows.map(r => {
+                const rawFechaSol = r["Fecha solicitud"] || r["fechaSol"] || r["Fecha"] || "";
+                const fechaSolStr = normalizeDateToYYYYMMDD(rawFechaSol);
+
+                const rawFechaResp = r["Fecha de respuesta"] || r["fechaResp"] || "";
+                const fechaRespStr = normalizeDateToYYYYMMDD(rawFechaResp);
+
+                const mesNormalizado = normalizeMonth(r["Mes"] || r["mes"], fechaSolStr);
+                const anoStr = (r["AÑO"] || r["Ano"] || r["ano"] || (fechaSolStr ? fechaSolStr.substring(0, 4) : "2026")).toString().trim();
+
+                // Clean Marcas to standard "Allianz Colombia" or "Fundación Allianz"
+                let rawMarca = (r["Marcas y plataformas de Allianz"] || r["marcas"] || "Allianz Colombia").toString().trim();
+                let marcaClean = "Allianz Colombia";
+                if (rawMarca.toLowerCase().includes("funda")) {
+                    marcaClean = "Fundación Allianz";
+                }
+
+                // Clean Status Casos Escalados
+                let rawStatus = (r["Status Casos Escalados"] || r["statusEscalado"] || "No aplica").toString().trim();
+
+                // Clean Experiencia / Sentimiento
+                let rawExp = (r["Experiencia"] || r["experiencia"] || "Neutra").toString().trim();
+                let expClean = "Neutra";
+                if (rawExp.toLowerCase().includes("pos")) expClean = "Positiva";
+                else if (rawExp.toLowerCase().includes("neg")) expClean = "Negativa";
+
+                return {
+                    fechaSol: fechaSolStr,
+                    fechaResp: fechaRespStr,
+                    mes: mesNormalizado,
+                    canal: (r["Canal"] || r["canal"] || "Otros").toString().trim(),
+                    medio: (r["Medio"] || r["medio"] || "").toString().trim(),
+                    inflowMotivo: (r["inflow por motivo"] || r["inflowMotivo"] || "").toString().trim(),
+                    motivo: (r["Motivo"] || r["motivo"] || "").toString().trim(),
+                    datosPersonales: (r["Datos Personales"] || "").toString().trim(),
+                    marcas: marcaClean,
+                    eventos: (r["Eventos"] || "").toString().trim(),
+                    experiencia: expClean,
+                    usuario: (r["Nombre usuario"] || r["usuario"] || "").toString().trim(),
+                    comentario: (r["Detalle comentario"] || r["comentario"] || "").toString().trim(),
+                    respuestaCM: (r["Respuesta del CM"] || r["respuestaCM"] || "").toString().trim(),
+                    link: (r["Link de las publicaciones"] || r["link"] || "").toString().trim(),
+                    manejo: (r["Manejo Allianz"] || "").toString().trim(),
+                    escalado: (r["Escalado"] !== undefined ? r["Escalado"] : "No").toString().trim(),
+                    statusEscalado: rawStatus,
+                    ano: anoStr,
+                    week: (r["Week"] || r["semana"] || "SEM").toString().trim()
+                };
+            });
+
+            populateFilterOptions();
+            renderDashboard();
+        }
+
+        function populateFilterOptions() {
+            const getUnique = key => [...new Set(rawData.map(d => d[key]).filter(Boolean))].sort();
+            fillSelect('filter-ano', getUnique('ano'));
+            
+            // Sort calendar months
+            const calendarMonths = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+            const rawMonths = getUnique('mes');
+            const sortedMonths = calendarMonths.filter(m => rawMonths.includes(m)).concat(rawMonths.filter(m => !calendarMonths.includes(m)));
+            fillSelect('filter-mes', sortedMonths);
+
+            fillSelect('filter-week', getUnique('week'));
+            fillSelect('filter-canal', getUnique('canal'));
+            fillSelect('filter-medio', getUnique('medio'));
+            fillSelect('filter-motivo', getUnique('motivo'));
+            fillSelect('filter-marcas', ["Allianz Colombia", "Fundación Allianz"]);
+        }
+
+        function fillSelect(id, values) {
+            const select = document.getElementById(id);
+            const current = select.value;
+            select.innerHTML = '<option value="ALL">Todos</option>';
+            values.forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                select.appendChild(opt);
+            });
+            select.value = current || 'ALL';
+        }
+
+        function getFilteredData() {
+            const ano = document.getElementById('filter-ano').value;
+            const mes = document.getElementById('filter-mes').value;
+            const week = document.getElementById('filter-week').value;
+            const dia = document.getElementById('filter-dia').value;
+            const canal = document.getElementById('filter-canal').value;
+            const medio = document.getElementById('filter-medio').value;
+            const motivo = document.getElementById('filter-motivo').value;
+            const marcas = document.getElementById('filter-marcas').value;
+
+            return rawData.filter(d => {
+                if (ano !== 'ALL' && d.ano !== ano) return false;
+                if (mes !== 'ALL' && d.mes !== mes) return false;
+                if (week !== 'ALL' && d.week !== week) return false;
+                if (dia && d.fechaSol !== dia) return false;
+                if (canal !== 'ALL' && d.canal !== canal) return false;
+                if (medio !== 'ALL' && d.medio !== medio) return false;
+                if (motivo !== 'ALL' && d.motivo !== motivo) return false;
+                if (marcas !== 'ALL' && d.marcas !== marcas) return false;
+                return true;
+            });
+        }
+
+        function setTimeView(view) {
+            currentTimeView = view;
+            ['day', 'week', 'month'].forEach(v => {
+                const btn = document.getElementById(`view-${v}-btn`);
+                if (v === view) {
+                    btn.className = "px-3.5 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+                } else {
+                    btn.className = "px-3.5 py-1.5 rounded-lg transition-all text-slate-400 hover:text-white";
+                }
+            });
+
+            const labels = {
+                day: "Tendencia de Inflow Total por Día",
+                week: "Tendencia de Inflow Total por Semana",
+                month: "Tendencia de Inflow Total por Mes"
+            };
+            document.getElementById('timeline-title').innerHTML = `<i data-lucide="trending-up" class="w-4 h-4 text-blue-400"></i> ${labels[view]}`;
+            lucide.createIcons();
+            renderDashboard();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-ano').value = 'ALL';
+            document.getElementById('filter-mes').value = 'ALL';
+            document.getElementById('filter-week').value = 'ALL';
+            document.getElementById('filter-dia').value = '';
+            document.getElementById('filter-canal').value = 'ALL';
+            document.getElementById('filter-medio').value = 'ALL';
+            document.getElementById('filter-motivo').value = 'ALL';
+            document.getElementById('filter-marcas').value = 'ALL';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            currentPage = 1;
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const data = getFilteredData();
+            document.getElementById('filtered-records-counter').textContent = `${data.length} de ${rawData.length} registros filtrados`;
+            updateKPIs(data);
+            updateTimelineChart(data);
+            updateBreakdownCharts(data);
+            renderTable();
+        }
+
+        function updateKPIs(data) {
+            const total = data.length;
+            
+            // 1. Inflow & Respuestas
+            const conResp = data.filter(d => d.respuestaCM && d.respuestaCM.trim() !== "" && d.respuestaCM.toLowerCase() !== "sin respuesta").length;
+            const respPct = total ? Math.round((conResp / total) * 100) : 0;
+            document.getElementById('kpi-total-inflow').textContent = total.toLocaleString();
+            document.getElementById('kpi-resp-rate').textContent = `${conResp.toLocaleString()} (${respPct}%)`;
+
+            // 2. Marcas (Allianz Colombia vs Fundación Allianz)
+            const allianzColCount = data.filter(d => d.marcas === "Allianz Colombia").length;
+            const fundacionCount = data.filter(d => d.marcas === "Fundación Allianz").length;
+            const allianzColPct = total ? Math.round((allianzColCount / total) * 100) : 0;
+            const fundacionPct = total ? Math.round((fundacionCount / total) * 100) : 0;
+
+            document.getElementById('kpi-marca-allianz').textContent = allianzColCount.toLocaleString();
+            document.getElementById('kpi-marca-fundacion').textContent = fundacionCount.toLocaleString();
+            document.getElementById('kpi-pct-allianz').textContent = `${allianzColCount.toLocaleString()} (${allianzColPct}%)`;
+            document.getElementById('kpi-pct-fundacion').textContent = `${fundacionCount.toLocaleString()} (${fundacionPct}%)`;
+
+            // 3. Escalados & Estados (Abierto, Cerrado, En Proceso...)
+            const escalados = data.filter(d => {
+                const esc = (d.escalado || '').toString().toLowerCase().trim();
+                return esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
+            });
+            const totalEscalados = escalados.length;
+            const escPct = total ? Math.round((totalEscalados / total) * 100) : 0;
+            document.getElementById('kpi-escalados').textContent = `${totalEscalados.toLocaleString()} (${escPct}%)`;
+
+            // Status counts
+            const statusAbiertos = data.filter(d => {
+                const s = (d.statusEscalado || '').toLowerCase();
+                return s.includes('abierto') || s.includes('proceso') || s.includes('pendiente') || s.includes('asignado');
+            }).length;
+            const statusCerrados = data.filter(d => {
+                const s = (d.statusEscalado || '').toLowerCase();
+                return s.includes('cerrado') || s.includes('resuelto') || s.includes('solucion');
+            }).length;
+            
+            const abPct = total ? Math.round((statusAbiertos / total) * 100) : 0;
+            const cePct = total ? Math.round((statusCerrados / total) * 100) : 0;
+
+            document.getElementById('kpi-esc-abiertos').textContent = `${statusAbiertos.toLocaleString()} (${abPct}%)`;
+            document.getElementById('kpi-esc-cerrados').textContent = `${statusCerrados.toLocaleString()} (${cePct}%)`;
+
+            // 4. Sentimiento / Experiencia (% y Cantidad)
+            const posCount = data.filter(d => d.experiencia === "Positiva").length;
+            const neuCount = data.filter(d => d.experiencia === "Neutra").length;
+            const negCount = data.filter(d => d.experiencia === "Negativa").length;
+
+            const posPct = total ? Math.round((posCount / total) * 100) : 0;
+            const neuPct = total ? Math.round((neuCount / total) * 100) : 0;
+            const negPct = total ? Math.round((negCount / total) * 100) : 0;
+
+            document.getElementById('kpi-sentimiento-pos').textContent = `${posPct}%`;
+            document.getElementById('kpi-sent-pos-val').textContent = `${posCount.toLocaleString()} (${posPct}%)`;
+            document.getElementById('kpi-sent-neu-val').textContent = `${neuCount.toLocaleString()} (${neuPct}%)`;
+            document.getElementById('kpi-sent-neg-val').textContent = `${negCount.toLocaleString()} (${negPct}%)`;
+
+            lucide.createIcons();
+        }
+
+        function updateTimelineChart(data) {
+            const grouped = {};
+            const groupedEsc = {};
+
+            data.forEach(d => {
+                let key = d.fechaSol || 'Sin Fecha';
+                if (currentTimeView === 'week') {
+                    key = d.week || 'Semana';
+                } else if (currentTimeView === 'month') {
+                    key = d.mes || 'Mes';
+                }
+
+                grouped[key] = (grouped[key] || 0) + 1;
+                const esc = (d.escalado || '').toString().toLowerCase().trim();
+                const isEsc = esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
+                groupedEsc[key] = (groupedEsc[key] || 0) + (isEsc ? 1 : 0);
+            });
+
+            const labels = Object.keys(grouped).sort();
+            const values = labels.map(l => grouped[l]);
+            const escValues = labels.map(l => groupedEsc[l] || 0);
+
+            if (charts.timeline) charts.timeline.destroy();
+
+            const ctx = document.getElementById('timelineChart').getContext('2d');
+            charts.timeline = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Inflow',
+                            data: values,
+                            backgroundColor: '#0070d2',
+                            borderRadius: 6,
+                            maxBarThickness: 30
+                        },
+                        {
+                            label: 'Escalados',
+                            data: escValues,
+                            backgroundColor: '#f59e0b',
+                            borderRadius: 6,
+                            maxBarThickness: 30
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { backgroundColor: '#081226', titleColor: '#fff', bodyColor: '#93c5fd' }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', stepSize: 1 } }
+                    }
+                }
+            });
+        }
+
+        function updateBreakdownCharts(data) {
+            const total = data.length;
+
+            // 1. Canal (with counts and %)
+            const canalCounts = {};
+            data.forEach(d => {
+                const c = d.canal || 'Otros';
+                canalCounts[c] = (canalCounts[c] || 0) + 1;
+            });
+            const canalLabels = Object.keys(canalCounts);
+            document.getElementById('canal-total-badge').textContent = `${canalLabels.length} canales activos`;
+            createDistributionChart('canalChart', canalCounts, total, ['#0070d2', '#e1306c', '#0077b5', '#0284c7', '#ff0000', '#10b981'], 'doughnut');
+
+            // 2. Medio (with counts and %)
+            const medioCounts = {};
+            data.forEach(d => {
+                const m = d.medio || 'Otros';
+                medioCounts[m] = (medioCounts[m] || 0) + 1;
+            });
+            const medioLabels = Object.keys(medioCounts);
+            document.getElementById('medio-total-badge').textContent = `${medioLabels.length} medios activos`;
+            createDistributionChart('medioChart', medioCounts, total, ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981'], 'pie');
+
+            // 3. Motivo Top 6
+            const motivoCounts = {};
+            data.forEach(d => {
+                const mot = d.motivo || 'Otros';
+                motivoCounts[mot] = (motivoCounts[mot] || 0) + 1;
+            });
+            createDistributionChart('motivoChart', motivoCounts, total, ['#8b5cf6', '#6366f1', '#a855f7', '#d946ef', '#0ea5e9', '#10b981'], 'bar', true, 6);
+
+            // 4. Status Casos Escalados
+            const statusCounts = {};
+            data.forEach(d => {
+                const st = d.statusEscalado || 'No Especificado';
+                statusCounts[st] = (statusCounts[st] || 0) + 1;
+            });
+            createDistributionChart('statusChart', statusCounts, total, ['#f59e0b', '#10b981', '#3b82f6', '#ec4899', '#64748b', '#8b5cf6'], 'bar', true);
+        }
+
+        function createDistributionChart(canvasId, countsObj, total, colors, type, isHorizontal = false, topLimit = 0) {
+            let sortedEntries = Object.entries(countsObj).sort((a, b) => b[1] - a[1]);
+            if (topLimit > 0) sortedEntries = sortedEntries.slice(0, topLimit);
+
+            const labels = sortedEntries.map(e => e[0]);
+            const values = sortedEntries.map(e => e[1]);
+
+            if (charts[canvasId]) charts[canvasId].destroy();
+
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            charts[canvasId] = new Chart(ctx, {
+                type: type,
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 0,
+                        borderRadius: isHorizontal ? 4 : 0
+                    }]
+                },
+                options: {
+                    indexAxis: isHorizontal ? 'y' : 'x',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: type !== 'bar',
+                            position: 'bottom',
+                            labels: {
+                                color: '#cbd5e1',
+                                font: { size: 11 },
+                                boxWidth: 12,
+                                generateLabels: function(chart) {
+                                    const dataset = chart.data.datasets[0];
+                                    return chart.data.labels.map((label, i) => {
+                                        const val = dataset.data[i] || 0;
+                                        const pct = total ? Math.round((val / total) * 100) : 0;
+                                        return {
+                                            text: `${label}: ${val.toLocaleString()} (${pct}%)`,
+                                            fillStyle: dataset.backgroundColor[i % dataset.backgroundColor.length],
+                                            hidden: isNaN(dataset.data[i]),
+                                            index: i
+                                        };
+                                    });
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    const pct = total ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${val.toLocaleString()} registros (${pct}%)`;
+                                }
+                            }
+                        }
+                    },
+                    scales: type === 'bar' ? {
+                        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                        y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                    } : {}
+                }
+            });
+        }
+
+        function renderTable() {
+            let data = getFilteredData();
+            const search = (document.getElementById('search-input').value || '').toLowerCase();
+            
+            if (search) {
+                data = data.filter(d => 
+                    (d.usuario && d.usuario.toLowerCase().includes(search)) ||
+                    (d.comentario && d.comentario.toLowerCase().includes(search)) ||
+                    (d.motivo && d.motivo.toLowerCase().includes(search)) ||
+                    (d.canal && d.canal.toLowerCase().includes(search)) ||
+                    (d.medio && d.medio.toLowerCase().includes(search)) ||
+                    (d.marcas && d.marcas.toLowerCase().includes(search))
+                );
+            }
+
+            const total = data.length;
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginated = data.slice(start, end);
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (paginated.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="14" class="text-center py-6 text-slate-500">No se encontraron registros con los filtros seleccionados</td></tr>`;
+            } else {
+                paginated.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/40 transition";
+                    
+                    const esc = (row.escalado || '').toString().toLowerCase().trim();
+                    const isEsc = esc === 'true' || esc === 'sí' || esc === 'si' || esc === 'yes';
+                    const escaladoBadge = isEsc 
+                        ? `<span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-bold">Sí</span>` 
+                        : `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px]">No</span>`;
+
+                    let expBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">${row.experiencia || '-'}</span>`;
+                    if ((row.experiencia || '').toLowerCase().includes('pos')) expBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">Positiva</span>`;
+                    if ((row.experiencia || '').toLowerCase().includes('neg')) expBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">Negativa</span>`;
+
+                    const linkBtn = row.link && row.link.startsWith('http') 
+                        ? `<a href="${row.link}" target="_blank" class="text-blue-400 hover:text-blue-300 flex items-center gap-1"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> Ver</a>`
+                        : `<span class="text-slate-600">-</span>`;
+
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap font-mono">${row.fechaSol || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-300 font-semibold">${row.mes || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap">${row.week || '-'}</td>
+                        <td class="py-2.5 px-3 font-semibold text-blue-400">${row.canal || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${row.medio || '-'}</td>
+                        <td class="py-2.5 px-3 text-purple-300 font-medium">${row.motivo || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${row.marcas || '-'}</td>
+                        <td class="py-2.5 px-3">${expBadge}</td>
+                        <td class="py-2.5 px-3 text-cyan-400 font-mono">${row.usuario || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-400 truncate max-w-xs" title="${row.comentario || ''}">${row.comentario || '-'}</td>
+                        <td class="py-2.5 px-3 text-emerald-400 truncate max-w-xs" title="${row.respuestaCM || ''}">${row.respuestaCM || '-'}</td>
+                        <td class="py-2.5 px-3">${escaladoBadge}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${row.statusEscalado || '-'}</td>
+                        <td class="py-2.5 px-3">${linkBtn}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                lucide.createIcons();
+            }
+
+            document.getElementById('table-count-info').textContent = `Mostrando ${Math.min(start + 1, total)} - ${Math.min(end, total)} de ${total} registros`;
+            document.getElementById('prev-page-btn').disabled = currentPage === 1;
+            document.getElementById('next-page-btn').disabled = end >= total;
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            renderTable();
+        }
+
+        window.onload = initDashboard;
+    </script>
+</body>
+</html>
