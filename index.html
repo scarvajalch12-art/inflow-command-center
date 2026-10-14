@@ -1268,4 +1268,917 @@
             monthControls.classList.add('hidden');
 
             if (mode === 'day') {
-                btnDay.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow
+                btnDay.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+            } else if (mode === 'week') {
+                btnWeek.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+                weekControls.classList.remove('hidden');
+            } else if (mode === 'month') {
+                btnMonth.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-600 text-white shadow";
+                monthControls.classList.remove('hidden');
+            }
+            renderExecutiveSummary();
+        }
+
+        function resetFilters() {
+            Object.keys(selectedFilters).forEach(k => selectedFilters[k].clear());
+            document.querySelectorAll('.dropdown-container input[type="checkbox"]').forEach(cb => cb.checked = false);
+            populateFilterOptions();
+            applyFilters();
+        }
+
+        function applyFilters() {
+            currentPage = 1;
+            renderAllViews();
+        }
+
+        function renderAllViews() {
+            const data = getFilteredData();
+            document.getElementById('filtered-records-counter').textContent = `${data.length.toLocaleString()} de ${rawData.length.toLocaleString()} registros filtrados`;
+            
+            updateKPIs(data);
+            renderCanalComparativeTable(data);
+            renderSentimientoComparativeTable(data);
+            renderMotivosSection(data);
+            renderExecutiveSummary();
+            renderTable();
+
+            if (activeTab === 'tab-dash') {
+                renderHorizontalCharts(data);
+                updateTimelineChart(data);
+            } else if (activeTab === 'tab-cierre') {
+                renderTab2(data);
+            } else if (activeTab === 'tab-analisis') {
+                renderTab3(data);
+            }
+        }
+
+        function updateKPIs(data) {
+            const total = data.length;
+            const conResp = data.filter(d => d.respuestaCM && d.respuestaCM.trim() !== "" && d.respuestaCM.toLowerCase() !== "sin respuesta").length;
+            const respPct = total ? Math.round((conResp / total) * 100) : 0;
+            document.getElementById('kpi-total-inflow').textContent = total.toLocaleString();
+            document.getElementById('kpi-resp-rate').textContent = `${conResp.toLocaleString()} (${respPct}%)`;
+
+            const breakdownContainer = document.getElementById('kpi-inflow-months-breakdown');
+            const breakdownList = document.getElementById('kpi-inflow-months-list');
+            const monthCounts = {};
+            data.forEach(d => {
+                const m = d.mes || 'Sin Mes';
+                monthCounts[m] = (monthCounts[m] || 0) + 1;
+            });
+            const activeMonths = Object.keys(monthCounts);
+
+            if (activeMonths.length >= 2) {
+                breakdownContainer.classList.remove('hidden');
+                breakdownList.innerHTML = activeMonths.map(m => {
+                    const c = monthCounts[m];
+                    const pct = total ? ((c / total) * 100).toFixed(1) : 0;
+                    return `<div class="flex justify-between items-center"><span class="font-medium">• ${m}:</span><strong>${c.toLocaleString()} (${pct}%)</strong></div>`;
+                }).join('');
+            } else {
+                breakdownContainer.classList.add('hidden');
+                breakdownList.innerHTML = '';
+            }
+
+            const allianzColCount = data.filter(d => d.marcas === "Allianz Colombia").length;
+            const fundacionCount = data.filter(d => d.marcas === "Fundación Allianz").length;
+            const allianzColPct = total ? Math.round((allianzColCount / total) * 100) : 0;
+            const fundacionPct = total ? Math.round((fundacionCount / total) * 100) : 0;
+
+            document.getElementById('kpi-marca-allianz').textContent = allianzColCount.toLocaleString();
+            document.getElementById('kpi-marca-fundacion').textContent = fundacionCount.toLocaleString();
+            document.getElementById('kpi-pct-allianz').textContent = `${allianzColCount.toLocaleString()} (${allianzColPct}%)`;
+            document.getElementById('kpi-pct-fundacion').textContent = `${fundacionCount.toLocaleString()} (${fundacionPct}%)`;
+
+            const countAbiertos = data.filter(d => d.escaladoCategory === 'VERDADERO_ABIERTO').length;
+            const countCerrados = data.filter(d => d.escaladoCategory === 'VERDADERO_CERRADO').length;
+            const countFalso = data.filter(d => d.escaladoCategory === 'FALSO').length;
+            const totalEscaladosReales = countAbiertos + countCerrados;
+
+            const abPct = total ? ((countAbiertos / total) * 100).toFixed(1) : '0';
+            const cePct = total ? ((countCerrados / total) * 100).toFixed(1) : '0';
+            const faPct = total ? ((countFalso / total) * 100).toFixed(1) : '0';
+
+            document.getElementById('kpi-escalados').textContent = totalEscaladosReales.toLocaleString();
+            document.getElementById('kpi-esc-abiertos-v').textContent = `${countAbiertos.toLocaleString()} (${abPct}%)`;
+            document.getElementById('kpi-esc-cerrados-v').textContent = `${countCerrados.toLocaleString()} (${cePct}%)`;
+            document.getElementById('kpi-esc-falso-v').textContent = `${countFalso.toLocaleString()} (${faPct}%)`;
+
+            const posCount = data.filter(d => d.experiencia === "Positiva").length;
+            const neuCount = data.filter(d => d.experiencia === "Neutra").length;
+            const negCount = data.filter(d => d.experiencia === "Negativa").length;
+
+            const posPct = total ? Math.round((posCount / total) * 100) : 0;
+            const neuPct = total ? Math.round((neuCount / total) * 100) : 0;
+            const negPct = total ? Math.round((negCount / total) * 100) : 0;
+
+            document.getElementById('kpi-sentimiento-pos').textContent = `${posPct}%`;
+            document.getElementById('kpi-sent-pos-val').textContent = `${posCount.toLocaleString()} (${posPct}%)`;
+            document.getElementById('kpi-sent-neu-val').textContent = `${neuCount.toLocaleString()} (${neuPct}%)`;
+            document.getElementById('kpi-sent-neg-val').textContent = `${negCount.toLocaleString()} (${negPct}%)`;
+            lucide.createIcons();
+        }
+
+        function renderCanalComparativeTable(data) {
+            const total = data.length;
+            const tbody = document.getElementById('tbody-canal-comparative');
+            const tfoot = document.getElementById('tfoot-canal-comparative');
+            const distinctMonths = [...new Set(data.map(d => d.mes).filter(Boolean))];
+
+            let labelPeriodo = "Interacciones";
+            let labelVariacion = "Variación";
+            let monthA = null;
+            let monthB = null;
+
+            if (selectedFilters.mes.size >= 2) {
+                const arr = Array.from(selectedFilters.mes);
+                monthA = arr[0]; monthB = arr[1];
+                labelPeriodo = `Interacciones (${monthB})`;
+                labelVariacion = `Variación vs. ${monthA}`;
+                document.getElementById('comparative-period-badge').textContent = `${monthA} vs ${monthB}`;
+            } else if (distinctMonths.length === 2) {
+                monthA = distinctMonths[0]; monthB = distinctMonths[1];
+                labelPeriodo = `Interacciones (${monthB})`;
+                labelVariacion = `Variación vs. ${monthA}`;
+                document.getElementById('comparative-period-badge').textContent = `${monthA} vs ${monthB}`;
+            } else {
+                document.getElementById('comparative-period-badge').textContent = distinctMonths[0] || 'Consolidado';
+            }
+
+            document.getElementById('th-interacciones-periodo').textContent = labelPeriodo;
+            document.getElementById('th-variacion-periodo').textContent = labelVariacion;
+
+            const channelStats = {};
+            data.forEach(d => {
+                const c = d.canal || 'Otros';
+                if (!channelStats[c]) channelStats[c] = { total: 0, countA: 0, countB: 0 };
+                channelStats[c].total++;
+                if (monthA && d.mes === monthA) channelStats[c].countA++;
+                if (monthB && d.mes === monthB) channelStats[c].countB++;
+            });
+
+            const sortedChannels = Object.entries(channelStats).sort((a, b) => b[1].total - a[1].total);
+            let totalInteraccionesCount = 0;
+            let totalCountA = 0;
+            let totalCountB = 0;
+
+            const rowsHtml = sortedChannels.map(([cName, stats]) => {
+                let interacciones = stats.total;
+                let diffText = "-";
+                let tendenciaText = "Actividad regular";
+
+                if (monthA && monthB) {
+                    interacciones = stats.countB;
+                    const diff = stats.countB - stats.countA;
+                    totalCountA += stats.countA;
+                    totalCountB += stats.countB;
+                    let diffPctStr = stats.countA > 0 ? ` (${((diff / stats.countA) * 100).toFixed(1)}%)` : '';
+                    diffText = (diff > 0 ? `+${diff}` : `${diff}`) + diffPctStr;
+                    tendenciaText = diff > 0 ? "Aumento" : (diff < 0 ? "Disminución" : "Sin variación");
+                } else {
+                    tendenciaText = stats.total >= (total * 0.25) ? "Canal prioritario" : "Actividad regular";
+                }
+
+                totalInteraccionesCount += interacciones;
+                const baseTotal = (monthA && monthB) ? (data.filter(d => d.mes === monthB).length || total) : total;
+                const partPct = baseTotal ? ((interacciones / baseTotal) * 100).toFixed(1) : 0;
+
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-2.5 px-4 font-bold text-white">${cName}</td>
+                        <td class="py-2.5 px-4 text-right font-bold text-blue-300">${interacciones.toLocaleString()}</td>
+                        <td class="py-2.5 px-4 text-right font-semibold ${diffText.includes('+') ? 'text-emerald-400' : (diffText.includes('-') ? 'text-rose-400' : 'text-slate-400')}">${diffText}</td>
+                        <td class="py-2.5 px-4 text-right font-semibold text-cyan-300">${partPct}%</td>
+                        <td class="py-2.5 px-4 text-slate-300">${tendenciaText}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tbody.innerHTML = rowsHtml || `<tr><td colspan="5" class="text-center py-4 text-slate-500">Sin datos de canales</td></tr>`;
+
+            let diffGlobalText = "-";
+            let tendenciaGlobal = "Consolidado total";
+            if (monthA && monthB) {
+                const totalDiff = totalCountB - totalCountA;
+                diffGlobalText = (totalDiff > 0 ? `+${totalDiff}` : `${totalDiff}`);
+                tendenciaGlobal = totalDiff >= 0 ? "Crecimiento general" : "Disminución general";
+            }
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="py-3 px-4 font-black">Total Global</td>
+                    <td class="py-3 px-4 text-right font-black text-blue-400">${totalInteraccionesCount.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-right font-black ${totalCountB >= totalCountA ? 'text-emerald-400' : 'text-rose-400'}">${diffGlobalText}</td>
+                    <td class="py-3 px-4 text-right font-black text-cyan-400">100%</td>
+                    <td class="py-3 px-4 text-slate-200">${tendenciaGlobal}</td>
+                </tr>
+            `;
+        }
+
+        function renderHorizontalCharts(data) {
+            const canvasCanal = document.getElementById('canalHorizontalChart');
+            const canvasSent = document.getElementById('sentimientoHorizontalChart');
+            if (!canvasCanal || !canvasSent) return;
+
+            const total = data.length;
+            const canalCounts = {};
+            data.forEach(d => {
+                const c = d.canal || 'Otros';
+                canalCounts[c] = (canalCounts[c] || 0) + 1;
+            });
+            const sortedCanales = Object.entries(canalCounts).sort((a, b) => b[1] - a[1]);
+
+            if (charts.canalHorizontal) charts.canalHorizontal.destroy();
+            charts.canalHorizontal = new Chart(canvasCanal.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sortedCanales.map(s => s[0]),
+                    datasets: [{
+                        data: sortedCanales.map(s => s[1]),
+                        backgroundColor: ['#003780', '#0070d2', '#00a3e0', '#38bdf8', '#818cf8'],
+                        borderRadius: 6,
+                        maxBarThickness: 24
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#ffffff', font: { weight: '600' } } },
+                        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: '700', size: 11 } } }
+                    }
+                }
+            });
+
+            const pos = data.filter(d => d.experiencia === "Positiva").length;
+            const neu = data.filter(d => d.experiencia === "Neutra").length;
+            const neg = data.filter(d => d.experiencia === "Negativa").length;
+
+            if (charts.sentimientoHorizontal) charts.sentimientoHorizontal.destroy();
+            charts.sentimientoHorizontal = new Chart(canvasSent.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: ['Positiva', 'Neutra', 'Negativa'],
+                    datasets: [{
+                        data: [pos, neu, neg],
+                        backgroundColor: ['#003780', '#0070d2', '#38bdf8'],
+                        borderRadius: 6,
+                        maxBarThickness: 24
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#ffffff', font: { weight: '600' } } },
+                        y: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: '700', size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        function renderSentimientoComparativeTable(data) {
+            const total = data.length;
+            const tbody = document.getElementById('tbody-sentimiento-comparative');
+            const tfoot = document.getElementById('tfoot-sentimiento-comparative');
+            const distinctMonths = [...new Set(data.map(d => d.mes).filter(Boolean))];
+
+            let monthA = distinctMonths.length >= 2 ? distinctMonths[0] : null;
+            let monthB = distinctMonths.length >= 2 ? distinctMonths[1] : null;
+
+            const stats = {
+                Positiva: { total: 0, countA: 0, countB: 0 },
+                Neutra: { total: 0, countA: 0, countB: 0 },
+                Negativa: { total: 0, countA: 0, countB: 0 }
+            };
+
+            data.forEach(d => {
+                const exp = d.experiencia || 'Neutra';
+                if (stats[exp]) {
+                    stats[exp].total++;
+                    if (monthA && d.mes === monthA) stats[exp].countA++;
+                    if (monthB && d.mes === monthB) stats[exp].countB++;
+                }
+            });
+
+            tbody.innerHTML = ['Positiva', 'Neutra', 'Negativa'].map(st => {
+                let interacciones = (monthA && monthB) ? stats[st].countB : stats[st].total;
+                let diffText = (monthA && monthB) ? `${stats[st].countB - stats[st].countA}` : '-';
+                const partPct = total ? ((interacciones / total) * 100).toFixed(1) : 0;
+                return `
+                    <tr class="hover:bg-slate-800/40 transition">
+                        <td class="py-2.5 px-4 font-bold flex items-center gap-2 text-white">
+                            <span class="w-2 h-2 rounded-full ${st === 'Positiva' ? 'bg-emerald-400' : (st === 'Neutra' ? 'bg-cyan-400' : 'bg-rose-400')}"></span> ${st}
+                        </td>
+                        <td class="py-2.5 px-4 text-right font-bold text-white">${interacciones.toLocaleString()}</td>
+                        <td class="py-2.5 px-4 text-right font-semibold text-slate-300">${diffText}</td>
+                        <td class="py-2.5 px-4 text-right font-semibold text-purple-300">${partPct}%</td>
+                        <td class="py-2.5 px-4 text-slate-300">Estable</td>
+                    </tr>
+                `;
+            }).join('');
+
+            tfoot.innerHTML = `
+                <tr>
+                    <td class="py-3 px-4 font-black">Total General</td>
+                    <td class="py-3 px-4 text-right font-black text-purple-300">${total.toLocaleString()}</td>
+                    <td class="py-3 px-4 text-right font-black text-emerald-400">-</td>
+                    <td class="py-3 px-4 text-right font-black text-cyan-300">100%</td>
+                    <td class="py-3 px-4 text-slate-200">Balance general</td>
+                </tr>
+            `;
+        }
+
+        function updateTimelineChart(data) {
+            const canvasTimeline = document.getElementById('timelineChart');
+            if (!canvasTimeline) return;
+
+            const grouped = {};
+            const groupedEsc = {};
+
+            data.forEach(d => {
+                let key = d.fechaSol || 'Sin Fecha';
+                if (currentTimeView === 'week') key = d.week || 'Semana';
+                else if (currentTimeView === 'month') key = d.mes || 'Mes';
+
+                grouped[key] = (grouped[key] || 0) + 1;
+                if (d.escaladoCategory !== 'FALSO') groupedEsc[key] = (groupedEsc[key] || 0) + 1;
+            });
+
+            const labels = Object.keys(grouped).sort();
+            if (charts.timeline) charts.timeline.destroy();
+            charts.timeline = new Chart(canvasTimeline.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Total Inflow', data: labels.map(l => grouped[l]), backgroundColor: '#0070d2', borderRadius: 4 },
+                        { label: 'Escalados', data: labels.map(l => groupedEsc[l] || 0), backgroundColor: '#f59e0b', borderRadius: 4 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#ffffff', font: { weight: '600' } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#ffffff', font: { weight: '600' } } }
+                    }
+                }
+            });
+        }
+
+        function renderMotivosSection(data) {
+            const canvasMotivo = document.getElementById('motivoChart');
+            if (!canvasMotivo) return;
+
+            const total = data.length;
+            const motivoStats = {};
+            data.forEach(d => {
+                const mot = d.motivo || 'Otros';
+                motivoStats[mot] = (motivoStats[mot] || 0) + 1;
+            });
+            const sorted = Object.entries(motivoStats).sort((a,b)=>b[1]-a[1]);
+
+            if (charts.motivo) charts.motivo.destroy();
+            charts.motivo = new Chart(canvasMotivo.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: sorted.slice(0,6).map(s => s[0]),
+                    datasets: [{
+                        data: sorted.slice(0,6).map(s => s[1]),
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: 'rgba(255,255,255,0.08)' }, ticks: { color: '#ffffff', font: { size: 10 } } },
+                        y: { grid: { display: false }, ticks: { color: '#ffffff' } }
+                    }
+                }
+            });
+
+            document.getElementById('tbody-motivos-ranking').innerHTML = sorted.map(([mName, count], idx) => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="py-2 px-3 font-mono text-slate-500">${idx + 1}</td>
+                    <td class="py-2 px-3 font-semibold text-slate-200 truncate max-w-[200px]" title="${mName}">${mName}</td>
+                    <td class="py-2 px-3 text-right font-bold text-cyan-300">${count.toLocaleString()}</td>
+                    <td class="py-2 px-3 text-right font-semibold text-slate-400">-</td>
+                    <td class="py-2 px-3 text-right text-slate-400 font-semibold">${total ? ((count / total) * 100).toFixed(1) : 0}%</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderExecutiveSummary() {
+            const container = document.getElementById('executive-summary-content');
+            const data = getFilteredData();
+            const total = data.length;
+
+            if (total === 0) {
+                container.innerHTML = `<p class="text-slate-400 italic">No hay registros con los filtros seleccionados.</p>`;
+                return;
+            }
+
+            const posCount = data.filter(d => d.experiencia === "Positiva").length;
+            const neuCount = data.filter(d => d.experiencia === "Neutra").length;
+            const negCount = data.filter(d => d.experiencia === "Negativa").length;
+
+            const posPct = ((posCount / total) * 100).toFixed(1);
+            const neuPct = ((neuCount / total) * 100).toFixed(1);
+            const negPct = ((negCount / total) * 100).toFixed(1);
+
+            const countAbiertos = data.filter(d => d.escaladoCategory === 'VERDADERO_ABIERTO').length;
+            const countCerrados = data.filter(d => d.escaladoCategory === 'VERDADERO_CERRADO').length;
+            const countFalso = data.filter(d => d.escaladoCategory === 'FALSO').length;
+
+            container.innerHTML = `
+                <p class="font-bold text-slate-100">Hola equipo, comparto el cierre del día.</p>
+                <p>La operación registró un total de <strong>${total} interacciones (Inflow)</strong> distribuidas en los canales. Durante este periodo, la percepción del cliente registró un <strong>${posPct}% de satisfacción positiva (${posCount} casos)</strong>, un <strong>${neuPct}% de postura neutra (${neuCount} casos)</strong>, mientras que el <strong>${negPct}% restante correspondió a una experiencia negativa (${negCount} casos)</strong>.</p>
+                <p class="mt-2 font-semibold text-cyan-300">• Casos Escalados: ${countAbiertos + countCerrados} (${countAbiertos} abiertos, ${countCerrados} cerrados y ${countFalso} sin escalar).</p>
+            `;
+        }
+
+        function copySummaryText() {
+            const container = document.getElementById('executive-summary-content');
+            navigator.clipboard.writeText(container.innerText).then(() => {
+                const btn = document.getElementById('copy-btn');
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> ¡Copiado!`;
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="copy" class="w-4 h-4"></i> Copiar Texto`;
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+
+        function renderTable() {
+            let data = getFilteredData();
+            const search = (document.getElementById('search-input').value || '').toLowerCase();
+            
+            if (search) {
+                data = data.filter(d => 
+                    (d.usuario && d.usuario.toLowerCase().includes(search)) ||
+                    (d.comentario && d.comentario.toLowerCase().includes(search)) ||
+                    (d.motivo && d.motivo.toLowerCase().includes(search)) ||
+                    (d.canal && d.canal.toLowerCase().includes(search))
+                );
+            }
+
+            const total = data.length;
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginated = data.slice(start, end);
+
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+
+            if (paginated.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="14" class="text-center py-6 text-slate-500">No se encontraron registros</td></tr>`;
+            } else {
+                paginated.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-800/40 transition";
+
+                    let escaladoBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 text-[10px]">Falso</span>`;
+                    if (row.escaladoCategory === 'VERDADERO_ABIERTO') {
+                        escaladoBadge = `<span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold">V - Abierto</span>`;
+                    } else if (row.escaladoCategory === 'VERDADERO_CERRADO') {
+                        escaladoBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">V - Cerrado</span>`;
+                    }
+
+                    let expBadge = `<span class="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px]">${row.experiencia}</span>`;
+                    if (row.experiencia === 'Positiva') expBadge = `<span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">Positiva</span>`;
+                    if (row.experiencia === 'Negativa') expBadge = `<span class="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">Negativa</span>`;
+
+                    tr.innerHTML = `
+                        <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap font-mono">${row.fechaSol || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-300 font-semibold">${row.mes || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-400 whitespace-nowrap">${row.week || '-'}</td>
+                        <td class="py-2.5 px-3 font-semibold text-blue-400">${row.canal || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${row.medio || '-'}</td>
+                        <td class="py-2.5 px-3 text-purple-300 font-medium">${row.motivo || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${row.marcas || '-'}</td>
+                        <td class="py-2.5 px-3">${expBadge}</td>
+                        <td class="py-2.5 px-3 text-cyan-400 font-mono">${row.usuario || '-'}</td>
+                        <td class="py-2.5 px-3 text-slate-400 truncate max-w-xs" title="${row.comentario || ''}">${row.comentario || '-'}</td>
+                        <td class="py-2.5 px-3 text-emerald-400 truncate max-w-xs" title="${row.respuestaCM || ''}">${row.respuestaCM || '-'}</td>
+                        <td class="py-2.5 px-3">${escaladoBadge}</td>
+                        <td class="py-2.5 px-3 text-slate-300">${row.statusEscalado || '-'}</td>
+                        <td class="py-2.5 px-3 text-blue-400">${row.link ? '<a href="'+row.link+'" target="_blank">Ver</a>' : '-'}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                lucide.createIcons();
+            }
+
+            document.getElementById('table-count-info').textContent = `Mostrando ${Math.min(start + 1, total)} - ${Math.min(end, total)} de ${total.toLocaleString()} registros`;
+            document.getElementById('prev-page-btn').disabled = currentPage === 1;
+            document.getElementById('next-page-btn').disabled = end >= total;
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            renderTable();
+        }
+
+        function renderTab2(data) {
+            const distinctMonths = [...new Set(data.map(d => d.mes).filter(Boolean))].sort((a,b) => CALENDAR_MONTHS.indexOf(a) - CALENDAR_MONTHS.indexOf(b));
+            let mesEval = distinctMonths[distinctMonths.length - 1] || 'Agosto';
+            let mesBase = distinctMonths.length > 1 ? distinctMonths[distinctMonths.length - 2] : 'Julio';
+
+            const canales = ['X', 'LinkedIn', 'Instagram', 'Facebook'];
+            const getCounts = (m) => {
+                const sub = rawData.filter(d => d.mes === m);
+                const obj = {};
+                canales.forEach(c => obj[c] = sub.filter(d => d.canal === c).length);
+                obj.total = sub.length;
+                return obj;
+            };
+
+            const cb = getCounts(mesBase);
+            const ce = getCounts(mesEval);
+
+            document.getElementById('cierre-tbody-matriz1').innerHTML = `
+                <tr><td class="py-2 px-3 font-bold text-left">${mesBase}</td><td>${cb.X || '-'}</td><td>${cb.LinkedIn}</td><td>${cb.Instagram}</td><td>${cb.Facebook}</td><td class="font-bold">${cb.total}</td></tr>
+                <tr><td class="py-2 px-3 font-bold text-left">${mesEval}</td><td>${ce.X}</td><td>${ce.LinkedIn}</td><td>${ce.Instagram}</td><td>${ce.Facebook}</td><td class="font-bold">${ce.total}</td></tr>
+            `;
+
+            document.getElementById('cierre-tfoot-matriz1').innerHTML = `
+                <tr>
+                    <td class="py-2 px-3 text-left">Suma Total</td>
+                    <td>${cb.X + ce.X}</td><td>${cb.LinkedIn + ce.LinkedIn}</td><td>${cb.Instagram + ce.Instagram}</td><td>${cb.Facebook + ce.Facebook}</td>
+                    <td class="text-cyan-300">${cb.total + ce.total}</td>
+                </tr>
+                <tr class="bg-blue-950/40 text-blue-300 font-bold">
+                    <td class="py-1.5 px-3 text-left italic">Variación</td>
+                    <td>+${ce.X - cb.X}</td><td>+${ce.LinkedIn - cb.LinkedIn}</td><td class="${ce.Instagram - cb.Instagram < 0 ? 'text-rose-400' : ''}">${ce.Instagram - cb.Instagram}</td><td>+${ce.Facebook - cb.Facebook}</td>
+                    <td class="text-emerald-400">+${ce.total - cb.total}</td>
+                </tr>
+            `;
+
+            document.getElementById('cierre-th-mesA').textContent = mesBase;
+            document.getElementById('cierre-th-mesB').textContent = mesEval;
+
+            document.getElementById('cierre-tbody-matriz2').innerHTML = canales.map(c => {
+                const a = cb[c] || 0;
+                const b = ce[c] || 0;
+                const diff = b - a;
+                return `
+                    <tr>
+                        <td class="py-2 px-3 text-left font-bold text-white">${c}</td>
+                        <td>${a || '-'}</td><td>${b}</td><td class="font-bold">${a + b}</td>
+                        <td class="font-bold ${diff >= 0 ? 'text-emerald-400 bg-emerald-950/30' : 'text-rose-400 bg-rose-950/30'}">${diff >= 0 ? '+' + diff : diff}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('cierre-tfoot-matriz2').innerHTML = `
+                <tr>
+                    <td class="py-2 px-3 text-left">Suma total</td><td>${cb.total}</td><td>${ce.total}</td>
+                    <td class="text-cyan-300">${cb.total + ce.total}</td><td class="bg-emerald-950/40 text-emerald-300">+${ce.total - cb.total}</td>
+                </tr>
+            `;
+
+            const canvasRRSS = document.getElementById('chartSolicitudesRRSS');
+            if (canvasRRSS) {
+                if (charts.rrss) charts.rrss.destroy();
+                charts.rrss = new Chart(canvasRRSS.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: [mesBase, mesEval],
+                        datasets: [
+                            { label: 'X', data: [cb.X, ce.X], backgroundColor: '#38bdf8' },
+                            { label: 'LinkedIn', data: [cb.LinkedIn, ce.LinkedIn], backgroundColor: '#ef4444' },
+                            { label: 'Instagram', data: [cb.Instagram, ce.Instagram], backgroundColor: '#eab308' },
+                            { label: 'Facebook', data: [cb.Facebook, ce.Facebook], backgroundColor: '#22c55e' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            document.getElementById('tbody-cierre-eventos').innerHTML = `
+                <tr><td class="py-2 px-3 font-medium">Sin evento activo</td><td class="text-right text-cyan-400 font-bold">27</td><td class="text-right font-bold text-blue-400">277</td></tr>
+                <tr><td class="py-2 px-3 font-medium">15k Bogota 2026</td><td class="text-right text-slate-500">-</td><td class="text-right font-bold">107</td></tr>
+                <tr><td class="py-2 px-3 font-medium">15k Barranquilla</td><td class="text-right text-slate-500">-</td><td class="text-right font-bold">1</td></tr>
+            `;
+            document.getElementById('tfoot-cierre-eventos').innerHTML = `<tr><td class="py-2 px-3">Suma total</td><td class="text-right text-cyan-300">27</td><td class="text-right text-blue-300">385</td></tr>`;
+
+            document.getElementById('th-medio-mesA').textContent = mesBase;
+            document.getElementById('th-medio-mesB').textContent = mesEval;
+            const medios = ['Publicación', 'Mensaje', 'Historia', 'Comentario'];
+            document.getElementById('tbody-cierre-medios').innerHTML = medios.map(m => {
+                const countA = rawData.filter(d => d.mes === mesBase && d.medio === m).length;
+                const countB = data.filter(d => d.mes === mesEval && d.medio === m).length;
+                const diff = countB - countA;
+                return `
+                    <tr>
+                        <td class="py-2 px-3 text-left font-semibold">${m}</td>
+                        <td>${countA}</td><td>${countB}</td><td class="font-bold">${countA + countB}</td>
+                        <td class="font-bold ${diff >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${diff >= 0 ? '+' + diff : diff}</td>
+                    </tr>
+                `;
+            }).join('');
+            document.getElementById('tfoot-cierre-medios').innerHTML = `<tr><td class="py-2 px-3 text-left">Suma Total</td><td>${cb.total}</td><td>${ce.total}</td><td class="text-cyan-300">${cb.total + ce.total}</td><td class="text-emerald-400">+${ce.total - cb.total}</td></tr>`;
+
+            const canvasMedio = document.getElementById('chartSolicitudesMedio');
+            if (canvasMedio) {
+                if (charts.medio) charts.medio.destroy();
+                charts.medio = new Chart(canvasMedio.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Publicación', 'Mensaje', 'Historia', 'Comentario'],
+                        datasets: [
+                            { label: mesBase, data: [44, 115, 110, 96], backgroundColor: '#3b82f6' },
+                            { label: mesEval, data: [40, 86, 54, 232], backgroundColor: '#ef4444' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const canvasStatus = document.getElementById('chartStatusPQRS');
+            if (canvasStatus) {
+                if (charts.status) charts.status.destroy();
+                charts.status = new Chart(canvasStatus.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['No es una queja', 'Cerrado', 'Abierto'],
+                        datasets: [{
+                            data: [1776, 164, 18],
+                            backgroundColor: ['#3b82f6', '#3b82f6', '#38bdf8']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+
+            const canvasTop5 = document.getElementById('chartTop5Motivos');
+            if (canvasTop5) {
+                if (charts.top5) charts.top5.destroy();
+                charts.top5 = new Chart(canvasTop5.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Info seguros', 'Info empleo', 'Inscrip. 15k', 'Exp. asesor', 'Engage 15K'],
+                        datasets: [
+                            { label: 'jul', data: [10, 9, 8, 23, 48], backgroundColor: '#3b82f6' },
+                            { label: 'ago', data: [30, 13, 0, 40, 55], backgroundColor: '#ef4444' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const canvasSent = document.getElementById('chartSentimiento');
+            if (canvasSent) {
+                if (charts.sentimiento) charts.sentimiento.destroy();
+                charts.sentimiento = new Chart(canvasSent.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['Negativa', 'Neutra', 'Positiva'],
+                        datasets: [
+                            { label: 'jul', data: [24, 76, 265], backgroundColor: '#3b82f6' },
+                            { label: 'ago', data: [64, 81, 266], backgroundColor: '#ef4444' }
+                        ]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            const canvasFraude = document.getElementById('chartFraude');
+            if (canvasFraude) {
+                if (charts.fraude) charts.fraude.destroy();
+                charts.fraude = new Chart(canvasFraude.getContext('2d'), {
+                    type: 'bar',
+                    data: {
+                        labels: ['mar', 'abr', 'may'],
+                        datasets: [{
+                            data: [10, 7, 1],
+                            backgroundColor: '#3b82f6',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                });
+            }
+        }
+
+        function renderTab3(data) {
+            const distinctMonths = [...new Set(data.map(d => d.mes).filter(Boolean))].sort((a,b) => CALENDAR_MONTHS.indexOf(a) - CALENDAR_MONTHS.indexOf(b));
+            let mesEval = distinctMonths[distinctMonths.length - 1] || 'Agosto';
+            let mesBase = distinctMonths.length > 1 ? distinctMonths[distinctMonths.length - 2] : 'Julio';
+
+            const dataEval = data.filter(d => d.mes === mesEval);
+            const dataBase = rawData.filter(d => d.mes === mesBase);
+
+            const totalEval = dataEval.length;
+            const totalBase = dataBase.length;
+            const deltaTotal = totalEval - totalBase;
+
+            const getCount = (subset, field, val) => subset.filter(d => (d[field]||'').toLowerCase().includes(val.toLowerCase())).length;
+
+            const liEval = getCount(dataEval, 'canal', 'linked');
+            const liBase = getCount(dataBase, 'canal', 'linked');
+            const fbEval = getCount(dataEval, 'canal', 'face');
+            const fbBase = getCount(dataBase, 'canal', 'face');
+            const igEval = getCount(dataEval, 'canal', 'insta');
+            const igBase = getCount(dataBase, 'canal', 'insta');
+            const xEval = getCount(dataEval, 'canal', 'x');
+
+            const negEval = getCount(dataEval, 'experiencia', 'neg');
+            const negBase = getCount(dataBase, 'experiencia', 'neg');
+            const neuEval = getCount(dataEval, 'experiencia', 'neu');
+            const neuBase = getCount(dataBase, 'experiencia', 'neu');
+            const posEval = getCount(dataEval, 'experiencia', 'pos');
+            const posBase = getCount(dataBase, 'experiencia', 'pos');
+
+            const comEval = getCount(dataEval, 'medio', 'comen');
+            const msjEval = getCount(dataEval, 'medio', 'men');
+            const hisEval = getCount(dataEval, 'medio', 'his');
+            const pubEval = getCount(dataEval, 'medio', 'pub');
+
+            const keywordsTerremoto = ['terremoto', 'sismo', 'temblor', 'amparo terremoto', 'daños por sismo', 'grieta'];
+            const casosTerremoto = dataEval.filter(d => {
+                const comment = (d.comentario || '').toLowerCase();
+                const mot = (d.motivo || '').toLowerCase();
+                return keywordsTerremoto.some(kw => comment.includes(kw) || mot.includes(kw));
+            });
+
+            let terremotoHtml = '';
+            if (casosTerremoto.length > 0) {
+                const listadoCasos = casosTerremoto.map(c => `
+                    <li class="text-slate-300">
+                        <strong class="text-amber-300">[${c.canal} - ${c.medio}]:</strong> "${c.comentario || c.motivo}" 
+                        <span class="text-slate-400">(${c.usuario || 'Usuario'} • Exp: ${c.experiencia})</span>
+                    </li>
+                `).join('');
+
+                terremotoHtml = `
+                    <div class="mt-4 bg-amber-950/25 border border-amber-500/40 p-4 rounded-xl space-y-2">
+                        <div class="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase tracking-wide">
+                            <i data-lucide="alert-octagon" class="w-4 h-4"></i> Monitoreo Especial: Consultas y Comentarios sobre Sismos / Terremoto (${casosTerremoto.length} casos detectados)
+                        </div>
+                        <p class="text-slate-300">Durante <strong>${mesEval}</strong> se identificaron menciones ciudadanas asociadas a movimientos telúricos / sismos en el territorio nacional:</p>
+                        <ul class="list-disc pl-5 space-y-1 text-xs">
+                            ${listadoCasos}
+                        </ul>
+                        <p class="text-slate-400 italic pt-1 border-t border-slate-800">
+                            <strong>Análisis y Hallazgo:</strong> Los usuarios recurren a los canales digitales principalmente para resolver inquietudes preventivas sobre el <em>Amparo de Terremoto</em> en sus pólizas de Hogar o consultar la activación de coberturas ante fisuras leves. Se sugiere publicar historias/carruseles informativos que detallen la cobertura de Hogar Allianz y canales de atención de siniestros para evitar desinformación.
+                        </p>
+                    </div>
+                `;
+            } else {
+                terremotoHtml = `
+                    <div class="mt-4 bg-slate-900/60 border border-slate-800 p-3.5 rounded-xl space-y-1">
+                        <div class="flex items-center gap-2 text-slate-400 font-bold text-xs uppercase">
+                            <i data-lucide="activity" class="w-4 h-4 text-cyan-400"></i> Monitoreo Especial: Sismos / Terremoto
+                        </div>
+                        <p class="text-slate-400">No se registraron comentarios directos, quejas ni consultas activas asociadas a terremotos o sismos en el inflow de <strong>${mesEval}</strong> en redes sociales.</p>
+                    </div>
+                `;
+            }
+
+            const container = document.getElementById('analisis-narrativa-container');
+            container.innerHTML = `
+                <div class="space-y-1.5 border-b border-slate-800 pb-4">
+                    <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wide">Cierre RRSS Canal y mes</h3>
+                    <p><strong>${mesEval}</strong> se cierra con <strong>${totalEval} interacciones</strong>. Los canales que presentaron un aumento son <strong>LI con ${liEval} chats</strong> (+${liEval - liBase} vs ${mesBase.toLowerCase()}), y <strong>Facebook cierra con ${fbEval} chats</strong> (+${fbEval - fbBase} vs ${mesBase.toLowerCase()}).</p>
+                    <p>Los canales con disminución son:</p>
+                    <ul class="list-disc pl-5 space-y-0.5 text-slate-300">
+                        <li><strong>Instagram:</strong> ${igEval} chats (${igEval - igBase} vs ${mesBase.toLowerCase()}).</li>
+                        <li><strong>X:</strong> Presentó interacciones y cierra con ${xEval}.</li>
+                    </ul>
+                    <p class="font-semibold text-emerald-400">Un aumento global en ${mesEval.toLowerCase()} de ${deltaTotal >= 0 ? '+' + deltaTotal : deltaTotal} interacciones vs ${mesBase.toLowerCase()}.</p>
+                </div>
+
+                <div class="space-y-1.5 border-b border-slate-800 pb-4">
+                    <h3 class="text-sm font-bold text-purple-400 uppercase tracking-wide">En cuanto a la Experiencia (sentimiento)</h3>
+                    <p>La experiencia negativa aumentó cerrando con <strong>${negEval} interacciones</strong> (+${negEval - negBase} negativos) vs ${mesBase}.</p>
+                    <p>La experiencia neutra cierra con <strong>${neuEval} interacciones</strong> (+${neuEval - neuBase} vs ${mesBase.toLowerCase()}).</p>
+                    <p>La experiencia positiva aumentó cerrando en <strong>${posEval}</strong>, con una variación de +${posEval - posBase} interacción positiva.</p>
+                    
+                    <div class="mt-3 bg-rose-950/20 border border-rose-500/30 p-3.5 rounded-xl space-y-1">
+                        <p class="font-bold text-rose-300">¿Qué es lo que más impacta en lo negativo?</p>
+                        <ul class="list-disc pl-5 space-y-0.5 text-slate-300">
+                            <li><strong>Sin respuesta/atención:</strong> tema de Asistencia / Siniestros (5 interacciones corresponden al mismo user).</li>
+                            <li><strong>Queja sobre seguro:</strong> Novedad con Seguro Autos y novedad con Conductor elegido.</li>
+                            <li><strong>Sin respuesta/atención:</strong> En temas de Servicio al Cliente.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                ${terremotoHtml}
+
+                <div class="space-y-1.5 border-b border-slate-800 pb-4 pt-2">
+                    <h3 class="text-sm font-bold text-rose-400 uppercase tracking-wide">Reportes Fraude</h3>
+                    <ol class="list-decimal pl-5 space-y-1 text-slate-300">
+                        <li><strong>Escenario en LinkedIn:</strong> Activación de Póliza por pago por medio de Bancolombia - Publicación.</li>
+                        <li><strong>Escenario por mensaje:</strong> Activación de seguro no autorizada - Mensaje.</li>
+                    </ol>
+                    <p class="text-slate-400 italic mt-1">"Se les brindó manejo según lo autorizado, pero no compartieron datos. Reporte por IG fue porque persona haciéndose pasar por asesor solicitaba datos; reporte por LinkedIn por realizar un pago a una CB de Allianz identificados como personal interno."</p>
+                </div>
+
+                <div class="space-y-1.5 border-b border-slate-800 pb-4">
+                    <h3 class="text-sm font-bold text-cyan-400 uppercase tracking-wide">Tops eventos por marcas y plataformas</h3>
+                    <p>Evento con mayor participación: <strong>15k Bogotá 2026</strong> con <strong>107 interacciones</strong>.</p>
+                </div>
+
+                <div class="space-y-1.5 border-b border-slate-800 pb-4">
+                    <h3 class="text-sm font-bold text-blue-300 uppercase tracking-wide">Solicitudes por medio de contacto</h3>
+                    <p>Las solicitudes por medio de contacto para <strong>${mesEval}</strong> cierran así:</p>
+                    <ul class="list-disc pl-5 space-y-0.5 text-slate-300">
+                        <li><strong>Comentario:</strong> ${comEval} interacciones</li>
+                        <li><strong>Mensaje:</strong> ${msjEval} interacciones</li>
+                        <li><strong>Historia:</strong> ${hisEval} interacciones</li>
+                        <li><strong>Publicación:</strong> ${pubEval} interacciones</li>
+                    </ul>
+                    <p class="font-semibold text-slate-300 mt-2">Principales impactos por medio:</p>
+                    <ul class="list-disc pl-5 space-y-0.5 text-slate-400">
+                        <li><strong>Comentario:</strong> Queja sobre seguro (guía cuando las líneas de atención no responden). Felicitación sobre activaciones en IG.</li>
+                        <li><strong>Historia:</strong> Engagement 15K.</li>
+                        <li><strong>Mensaje:</strong> Interacción partido Colombia.</li>
+                        <li><strong>Publicación:</strong> Experiencia destacada con asesor o producto.</li>
+                    </ul>
+                </div>
+
+                <div class="space-y-1.5 border-b border-slate-800 pb-4">
+                    <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wide">Status casos Escalados PQRs</h3>
+                    <p>Para el cierre de <strong>${mesEval}</strong> tenemos <strong>164 casos en estado cerrado</strong> (solucionados en escalamiento) y <strong>18 casos en estado abierto</strong>:</p>
+                    <ul class="list-disc pl-5 space-y-0.5 text-slate-300">
+                        <li><strong>Información seguros:</strong> Solicitudes relacionadas a información de seguros (10) y quejas de seguros (5).</li>
+                        <li><strong>Queja sobre seguro:</strong> Novedades autos (diligenciamiento de formularios sin contacto o solicitud de grúas).</li>
+                        <li><strong>Sin respuesta/atención:</strong> Casos relacionados con siniestros.</li>
+                        <li><strong>Solicitud reparación:</strong> Arreglos de autos sin respuesta oportuna.</li>
+                        <li><strong>Problema con seguro:</strong> Novedades autos por temas de conductor elegido / grúa.</li>
+                    </ul>
+                    <p class="text-cyan-300 font-semibold mt-1">Mayor interacción registrada por Mensaje en Instagram.</p>
+                </div>
+
+                <div class="space-y-1.5 border-b border-slate-800 pb-4">
+                    <h3 class="text-sm font-bold text-purple-300 uppercase tracking-wide">Top 5 Motivos de Contacto (${mesEval})</h3>
+                    <ul class="list-disc pl-5 space-y-0.5 text-slate-300">
+                        <li><strong>Felicitación:</strong> 147 interacciones</li>
+                        <li><strong>Engagement 15K:</strong> 55 interacciones</li>
+                        <li><strong>Experiencia destacada con asesor o producto:</strong> 40 interacciones</li>
+                        <li><strong>Información 15k Bogotá 2026:</strong> 38 interacciones</li>
+                        <li><strong>Información seguros:</strong> 30 interacciones</li>
+                        <li><strong>Sin respuesta/atención:</strong> 23 interacciones</li>
+                        <li><strong>Queja sobre seguro:</strong> 19 interacciones</li>
+                    </ul>
+                    <p class="mt-1 text-slate-300">Se destaca el crecimiento de historias y contenidos donde los usuarios hacen parte de la <strong>Experiencia en la Carrera 15K</strong>, movilizando este motivo de contacto.</p>
+                </div>
+
+                <div class="space-y-4 pt-2">
+                    <h3 class="text-sm font-extrabold text-white uppercase tracking-wider flex items-center gap-2">
+                        <i data-lucide="target" class="w-4 h-4 text-emerald-400"></i> Matriz de Hallazgos Estratégicos
+                    </h3>
+
+                    <div class="bg-blue-950/30 border-l-4 border-blue-500 p-4 rounded-r-xl space-y-1">
+                        <h4 class="font-bold text-blue-400 text-xs uppercase">Hallazgos - Iniciar</h4>
+                        <p class="text-slate-300"><strong>Hallazgo identificado:</strong> Las interacciones por mensajes y comentarios presentaron crecimiento frente a ${mesBase}, concentrando solicitudes relacionadas con seguros, especialmente por dificultades para recibir atención, orientación y respuesta a novedades.</p>
+                        <p class="text-slate-400"><strong>Propuesta:</strong> Iniciar una estrategia de orientación preventiva sobre seguros, con contenidos que expliquen de forma clara los canales de atención, pasos para gestionar novedades y rutas de escalamiento. Esto permitirá disminuir la incertidumbre del usuario y prevenir la generación de nuevas quejas por falta de información.</p>
+                    </div>
+
+                    <div class="bg-emerald-950/30 border-l-4 border-emerald-500 p-4 rounded-r-xl space-y-1">
+                        <h4 class="font-bold text-emerald-400 text-xs uppercase">Hallazgos - Continuar</h4>
+                        <p class="text-slate-300"><strong>Hallazgo identificado:</strong> Se evidencian oportunidades de mejora en el acompañamiento de los usuarios que solicitan información o cotización de seguros a través de canales digitales. Algunos reportan no recibir contacto por parte de un asesor o recibir una atención incompleta, generando frustración y una posible pérdida de oportunidad comercial.</p>
+                        <p class="text-slate-400"><strong>Propuesta:</strong> Fortalecer el seguimiento de los leads generados desde la web y canales externos, asegurando contacto oportuno, información completa y acompañamiento hasta el cierre de la solicitud. Se recomienda establecer trazabilidad y tiempos de respuesta para garantizar una experiencia consistente.</p>
+                    </div>
+
+                    <div class="bg-amber-950/30 border-l-4 border-amber-500 p-4 rounded-r-xl space-y-1">
+                        <h4 class="font-bold text-amber-400 text-xs uppercase">Hallazgos - Mejorar</h4>
+                        <p class="text-slate-300"><strong>Hallazgo identificado:</strong> Las quejas relacionadas con seguros y atención continúan siendo el principal foco de oportunidad. Adicionalmente, se mantuvieron 2 reportes de posible fraude o estafa, asociados a personas que se hicieron pasar por asesores y solicitudes de pagos o datos.</p>
+                        <p class="text-slate-400"><strong>Propuesta:</strong> Mejorar la estrategia de prevención y respuesta frente a situaciones de riesgo, fortaleciendo contenidos de alerta sobre posibles estafas y señales para identificar comunicaciones no oficiales. Complementariamente, establecer mensajes de respuesta rápida para orientar a los usuarios ante reportes de fraude y reducir el riesgo de exposición de datos o pagos indebidos.</p>
+                    </div>
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function copiarInformeAnalisis() {
+            const container = document.getElementById('analisis-narrativa-container');
+            navigator.clipboard.writeText(container.innerText).then(() => {
+                const btn = document.getElementById('btn-copy-analisis');
+                btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i> ¡Copiado!`;
+                lucide.createIcons();
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="copy" class="w-3.5 h-3.5"></i> Copiar Minuta`;
+                    lucide.createIcons();
+                }, 2000);
+            });
+        }
+
+        window.onload = () => {
+            initDashboard();
+        };
+    </script>
+</body>
+</html>
